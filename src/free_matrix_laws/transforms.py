@@ -5,6 +5,7 @@ Refactor as needed.
 """
 from __future__ import annotations
 import numpy as np
+import numpy.linalg as la
 from typing import Callable, Optional, Tuple
 
 # ---- Extracted functions from the notebook ----
@@ -142,13 +143,6 @@ def random_semicircle(size):
   random_matrix = np.random.randn(size, size)
   return (random_matrix + random_matrix.T)/( np.sqrt(2 * size))
 
-#Example of usage:
-size = 200
-A = random_semicircle(size)
-print(la.norm(A - A.T))
-e = la.eigvalsh(A)
-plt.plot(e)
-np.trace(A * A)
 
 def Lambda(z, size, eps = 1E-6):
   ''' Lambda_eps(z) needed to calculate the distribution of a polynomial
@@ -156,8 +150,6 @@ def Lambda(z, size, eps = 1E-6):
   A = eps * 1.j * np.eye(size)
   A[0, 0] = z
   return A
-
-print(Lambda(1.j, 3))
 
 def G_semicircle(z):
     """
@@ -183,22 +175,6 @@ def G_semicircle(z):
     G = (z - discriminant) / 2
 
     return G
-
-# Example usage
-z = 3 + 4j  # Example input
-result = G_semicircle(z)
-print(f"Cauchy transform at {z} is {result}")
-
-# Test with an array of values
-z_array = [3 + 4j, 1 + 1j, 3 - 4j, 1 - 1j]
-result_array = G_semicircle(z_array)
-print(f"Cauchy transform for array {z_array} is {result_array}")
-
-plt.figure()
-z = np.linspace(-4,4) - 0.01j
-plt.plot(np.imag(G_semicircle(z)))
-z = np.linspace(-4,4) + 0.01j
-plt.plot(np.imag(G_semicircle(z)))
 
 
 def G_matrix_semicircle(w, B, rank):
@@ -241,18 +217,6 @@ def H_matrix_semicircle(w, B, rank):
   return(la.inv(G_matrix_semicircle(w, B, rank)) - w)
 
 
-n = 3
-rank = 2
-A1 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-z = (0.0 + 1j)
-w = z * np.eye(n)
-
-G = G_matrix_semicircle(w, A1, rank)
-print("G_matrix_semicircle = ", G)
-
-H = H_matrix_semicircle(w, A1, rank)
-print("H_matrix_semicircle = ", H)
-
 def omega(b, AA, rank, max_iter = 10000):
   ''' This computes subordination function for the sum of two semicircle variables.
   AA = (A1, A2), rank is a (rank1, rank2), where rank1 is the rank of matrix A1,
@@ -271,21 +235,6 @@ def omega(b, AA, rank, max_iter = 10000):
       print("Warning: no convergence after ", max_iter, "iterations")
   return W0
 
-#an example
-A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-print(A0)
-print(A1)
-print(A2)
-AA = (A1, A2)
-n = A0.shape[0]
-
-z = .5 + .01j
-B = Lambda(z, n) - A0
-print(B)
-
-print('result = ', omega(B, AA, rank = (2, 2)))
 
 #(10) Cauchy transform of free Poisson
 def G_free_poisson(z, lambda_param):
@@ -320,34 +269,6 @@ def G_free_poisson(z, lambda_param):
       G = G + (1 - lambda_param)/z
 
     return G
-
-
-
-lambda_param = 4  # Set λ (parameter of the free Poisson law)
-z = 3 + 1j          # Complex number at which to evaluate G(z)
-
-# Compute the Cauchy transform
-G_z = G_free_poisson(z, lambda_param)
-print(f"Cauchy transform G({z}) for λ={lambda_param}: {G_z}")
-
-#visualization
-
-plt.figure()
-#z = np.linspace(-4,4) - 0.01j
-#plt.plot(np.imag(G_free_poisson(z, 2)))
-m = 100
-al = (1 - np.sqrt(lambda_param))**2
-au = (1 + np.sqrt(lambda_param))**2
-x =  np.linspace(al,au, m)
-z = x - 0.01j
-plt.plot(x, np.imag(G_free_poisson(z, lambda_param)))
-z = x + 0.01j
-plt.plot(x, np.imag(G_free_poisson(z, lambda_param)))
-plt.grid()
-
-#let's check that this corresponds to a valid density function.
-f = - np.imag(G_free_poisson(z, lambda_param))/np.pi
-print(sum(f)* (au - al)/m)
 
 
 # (11) Matrix version of the Cauchy transform for the free Poisson random variable.
@@ -424,15 +345,6 @@ def random_fpoisson(size, lam):
   random_matrix = np.random.randn(size, int(np.floor(size * lam)))
   return (random_matrix @ random_matrix.T) /size
 
-#Example of usage:
-size = 200
-lam = 4
-A = random_fpoisson(size, lam)
-print(la.norm(A - A.T))
-e = la.eigvalsh(A)
-plt.figure()
-plt.plot(e)
-np.trace(A)/size
 
 #(15) random orthogonal matrix
 def random_orthogonal(n):
@@ -445,10 +357,7 @@ def random_orthogonal(n):
     # Q is the orthogonal matrix we want
     return Q
 
-# Example usage
-n = 3  # Dimension of the matrix
-Q = random_orthogonal(n)
-print("Random Orthogonal Matrix Q:\n", Q)
+
 
 # (16) This is a function that calculates the matrix Cauchy transform, provided that
 #the scalar Cauchy transform is known.
@@ -489,18 +398,6 @@ def H_matrix_custom(w, B, rank, G_name="G_semicircle", G_kwargs=None):
   ''' This is the h function: h = G(w)^{-1} - w$ '''
   return(la.inv(G_matrix_custom(w, B, rank, G_name, G_kwargs)) - w)
 
-n = 3
-rank = 2
-A1 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-z = (0.0 + 1j)
-w = z * np.eye(n)
-
-G = G_matrix_custom(w, A1, rank, G_name="G_semicircle")
-print("G_matrix_custom = ", G)
-
-H = H_matrix_custom(w, A1, rank,  G_name="G_semicircle")
-print("H_matrix_custom = ", H)
-
 
 #(18) The scalar Cauchy transform of an arbitrary discrete distribution
 def cauchy_transform_discrete(z, points, weights):
@@ -521,51 +418,12 @@ def cauchy_transform_discrete(z, points, weights):
     weights = np.asarray(weights)
     return np.sum(weights / (z - points), axis=1)
 
-# Example usage
-points = np.array([-2, -1, 1])  # Support points
-weights = np.array([2/4, 1/4, 1/4])  # Corresponding weights
-z_values = np.linspace(-3, 3, 500) + 0.1j  # Evaluate on the upper half-plane
-G_values = cauchy_transform_discrete(z_values, points, weights)
 
-# Plot real and imaginary parts
-plt.figure(figsize=(8, 5))
-plt.plot(z_values.real, G_values.real, label="Re(G_mu(z))", linestyle='dashed')
-plt.plot(z_values.real, G_values.imag, label="Im(G_mu(z))")
-plt.xlabel("Re(z)")
-plt.ylabel("G_mu(z)")
-plt.legend()
-plt.title("Cauchy Transform of Given Distribution")
-plt.grid()
-plt.show()
-
-A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-A_test = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
-print(A0)
-print(A1)
-print(A2)
-print(A_test)
-AA = (A1, A2)
-n = A0.shape[0]
-w = (0.5 + 0.1j) * np.eye(n)
-z = 0.01j
-print(la.inv(w - z * A_test))
 
 # Define the matrix-valued function
 def matrix_function(z, w, b):
     """Matrix-valued function of a complex variable z."""
     return -(1/np.pi) * la.inv(w - z * b) * np.imag(G_semicircle(z))
-
-print("test:", matrix_function(z, w, A_test))
-
-# Define the real path and shift it slightly above the real line
-epsilon = 1e-3  # Small imaginary shift
-def shifted_path(x):
-    return x + 1j * epsilon
-
-# Integration limits
-al, au = -4, 4  # Example real integration limits
 
 # Perform the integration for each matrix entry
 def cauchy_matrix_semicircle_0(w, b):
@@ -591,28 +449,6 @@ def H_matrix_semicircle_0(w, A1, eps = 1E-8):
   return(la.inv(cauchy_matrix_semicircle_0(w, A1)) - w)
 
 
-# Compute the cauchy transform via integral
-result_matrix = cauchy_matrix_semicircle_0(w, A1)
-print("Resultant matrix G after integration:")
-print(result_matrix)
-
-# Compute the h-function
-result_matrix = H_matrix_semicircle_0(w, A1)
-print("Resultant matrix H after integration:")
-print(result_matrix)
-
-
-
-#Let us visualize the result:
-
-m = 10
-x = np.linspace(-2, 2, m)
-GG = np.zeros(m, dtype=np.complex128)
-for i in trange(m):
-  result = cauchy_matrix_semicircle_0((x[i]+ 0.1j) * np.eye(n), A1)
-  GG[i] = result[0, 0]
-plt.plot(np.imag(GG))
-print(GG)
 
 def cauchy_matrix_semicircle_1(w, A1, eps = 1E-8):
   ''' This is function that computes the Cauchy transform of $A1 \otimes X$, where
@@ -628,57 +464,11 @@ def H_matrix_semicircle_1(w, A1, eps = 1E-8):
   return(la.inv(Cauchy_matrix_semicircle_1(w, A1, eps)) - w)
 
 
-n = 2
-A1 = np.eye(n)
-A1 = np.array([[0, 1], [1, 0]])
-
-z = (0.0 + 0.01j)
-w = z * np.eye(n)
-
-#np.set_printoptions(precision=2)
-arr = Cauchy_matrix_semicircle_1(w, A1)
-print(arr)
-H_matrix_semicircle_1(w, A1)
 
 def Lambda(z, size, eps = 1E-6):
   A = eps * 1.j * np.eye(size)
   A[0, 0] = z
   return A
-
-A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-print(A0)
-print(A1)
-print(A2)
-AA = (A1, A2)
-n = A0.shape[0]
-
-z = .5 + .01j
-B = Lambda(z, n) - A0
-print(B)
-
-
-W0 = 1.j * np.eye(n) #(initialization)
-  #print(W0)
-A1 = AA[0]
-A2 = AA[1]
-  #W1 = H_matrix_semicircle(W0, A1, rank = 2) + B
-  #W2 = H_matrix_semicircle(W1, A2, rank = 2) + B
-  #print(W2)
-max_iter = 40
-diffs = np.zeros((max_iter, 1))
-for i in trange(max_iter):
-  W1 = H_matrix_semicircle(W0, A1, rank = 2) + B
-  #print("W1 = ", W1)
-  W2 = H_matrix_semicircle(W1, A2, rank = 2) + B
-  #print("W2 = ", W2)
-  diffs[i] = la.norm(W2 - W0)
-  W0 = W2
-plt.plot(diffs)
-plt.yscale("log")
-plt.title("Convergence of the method")
-print(W0)
 
 def get_density_anticommutator(x, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -692,21 +482,7 @@ def get_density_anticommutator(x, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = .5
-f = get_density_anticommutator(x)
-print(f)
 
-#visualization
-m = 50
-a = 4
-XX = np.linspace(-a, a, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator(x)
-
-print(sum(f)*2*a/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
 
 def get_density_anticommutator_fpoisson(x, lambda_param, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -724,31 +500,7 @@ def get_density_anticommutator_fpoisson(x, lambda_param, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = 4
-f = get_density_anticommutator_fpoisson(x, lambda_param = 4)
-print(f)
 
-#visualization
-
-m = 50
-al = 2
-au = 105
-lambda_param = 4
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_fpoisson(x,lambda_param)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
-
-
-expect = sum(XX * f)*(au - al)/m
-print("expectation = ", expect)
-
-#g = - G_free_poisson(XX + .01j, 100).imag/(np.pi)
-#plt.plot(XX, g)
 
 def get_density_anticommutator_S_FP(x, lambda_param, eps = 0.01):
   '''calculates the density of the anticommutator of a semicircle and
@@ -768,24 +520,6 @@ def get_density_anticommutator_S_FP(x, lambda_param, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = 4
-f = get_density_anticommutator_fpoisson(x, lambda_param = 4)
-print(f)
-
-#visualization
-
-m = 50
-al = -20
-au = 20
-lambda_param = 4
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_S_FP(x,lambda_param)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
 
 def get_density_anticommutator_deform(x, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -799,22 +533,6 @@ def get_density_anticommutator_deform(x, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = .5
-f = get_density_anticommutator_deform(x)
-print(f)
-
-#visualization
-m = 50
-al = -3
-au = 7
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_deform(x)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
 
 def get_density_anticommutator_deform_SFP(x, lambda_param, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -832,23 +550,7 @@ def get_density_anticommutator_deform_SFP(x, lambda_param, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = .5
-lam = 4
-f = get_density_anticommutator_deform_SFP(x, lambda_param = lam)
-print(f)
 
-#visualization
-m = 100
-al = -18
-au = 25
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_deform_SFP(x, lam)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
 
 def cauchy_transform_custom(z):
     """
@@ -856,21 +558,6 @@ def cauchy_transform_custom(z):
     mu_X = (1/4)(2δ_{-2} + δ_{-1} + δ_{+1})
     """
     return (1/4) * (2 / (z + 2) + 1 / (z + 1) + 1 / (z - 1))
-
-# Example usage
-z_values = np.linspace(-3, 3, 500) + 0.1j  # Evaluate on the upper half-plane
-G_values = np.array([cauchy_transform_custom(z) for z in z_values])
-
-# Plot real and imaginary parts
-plt.figure(figsize=(8, 5))
-plt.plot(z_values.real, G_values.real, label="Re(G_mu(z))", linestyle='dashed')
-plt.plot(z_values.real, G_values.imag, label="Im(G_mu(z))")
-plt.xlabel("Re(z)")
-plt.ylabel("G_mu(z)")
-plt.legend()
-plt.title("Cauchy Transform of Given Distribution")
-plt.grid()
-plt.show()
 
 def get_density_anticommutator_deform_custom(x, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -888,22 +575,6 @@ def get_density_anticommutator_deform_custom(x, eps = 0.01):
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
 
-x = .5
-f = get_density_anticommutator_deform_custom(x)
-print(f)
-
-#visualization
-m = 100
-al = -4
-au = 11
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_deform_custom(x)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
 
 def get_density_anticommutator_deform_custom2(x, eps = 0.01):
   A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
@@ -923,21 +594,3 @@ def get_density_anticommutator_deform_custom2(x, eps = 0.01):
                         G_kwargs={"points":np.array([-2, -1, 1]), "weights": np.array([2/4, 1/4, 1/4])})
   f = (-1/np.pi) * Gxy[0,0].imag
   return f
-
-x = .5
-f = get_density_anticommutator_deform_custom2(x)
-print(f)
-
-#visualization
-m = 100
-al = -10
-au = 10
-XX = np.linspace(al, au, m)
-f = np.zeros(XX.shape)
-for i, x in enumerate(XX):
-   f[i] = get_density_anticommutator_deform_custom2(x)
-
-print(sum(f)*(au - al)/m) #just to check that the integral of the density is 1 (approximately)
-plt.plot(XX, f)
-plt.grid(True)
-
