@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "free-matrix-laws"
+version = "0.0.1"
+description = "Calculations for matrix-/operator-valued free probability."
+authors = [{name = "V. Kargin"}]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.22"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["free_matrix_laws*"]
