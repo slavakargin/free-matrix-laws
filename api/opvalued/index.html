@@ -624,11 +624,8 @@
 
     <div class="doc doc-contents ">
 
-        <p>Apply the operator-valued <em>covariance map</em>
-\[
-    \eta(B) \;=\; \sum_{i=1}^s A_i\, B\, A_i,
-\]
-where \(A_1,\ldots,A_s\) are (typically Hermitian) matrices.</p>
+        <p>Apply the completely positive (Kraus) map
+<span class="arithmatex">\(\eta(B) = \sum_{i=1}^s A_i\, B\, A_i^{\ast}\)</span>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -651,7 +648,7 @@ where \(A_1,\ldots,A_s\) are (typically Hermitian) matrices.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Matrix the map acts on.</p>
+                <p>Square matrix the map acts on.</p>
               </div>
             </td>
             <td>
@@ -663,13 +660,11 @@ where \(A_1,\ldots,A_s\) are (typically Hermitian) matrices.</p>
                 <code>A</code>
             </td>
             <td>
-                  <code>sequence of (n, n) ndarrays **or** a single array of shape (s, n, n)</code>
+                  <code>sequence of (n, n) ndarrays or (s, n, n) ndarray</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The list/stack of matrices <span class="arithmatex">\(A_i\)</span>. In many applications the <span class="arithmatex">\(A_i\)</span> are Hermitian,
-so <span class="arithmatex">\(A_i B A_i = A_i B A_i^*\)</span>. (The usual Kraus form uses <span class="arithmatex">\(A_i B A_i^*\)</span>;
-here Hermitian makes the two coincide.)</p>
+                <p>Kraus operators <span class="arithmatex">\(A_i\)</span> (no self-adjointness assumed).</p>
               </div>
             </td>
             <td>
@@ -695,30 +690,7 @@ here Hermitian makes the two coincide.)</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The value of <span class="arithmatex">\(\eta(B)\)</span>, with dtype promoted to <code>np.result_type(B.dtype, A.dtype)</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If shapes are inconsistent.</p>
+                <p>The value of <span class="arithmatex">\(\eta(B)\)</span>.</p>
               </div>
             </td>
           </tr>
@@ -728,24 +700,14 @@ here Hermitian makes the two coincide.)</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>• Complexity: <span class="arithmatex">\(\mathcal O(s\,n^3)\)</span>.<br />
-• If each <span class="arithmatex">\(A_i\)</span> is Hermitian, <span class="arithmatex">\(\eta\)</span> is self-adjoint w.r.t. the Hilbert--Schmidt inner product.
-• Implementation uses batched matrix multiplies and sums over the stack of <span class="arithmatex">\(A_i\)</span>.</p>
+  <p>• Uses <span class="arithmatex">\(A_i^{\ast}\)</span> (conjugate transpose), not <span class="arithmatex">\(A_i^{\mathsf T}\)</span>.<br />
+• Accepts a list/tuple of <span class="arithmatex">\((n,n)\)</span> or a stacked array <span class="arithmatex">\((s,n,n)\)</span>.</p>
 </details>
-
-<p><span class="doc-section-title">Examples:</span></p>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covariance_map</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
-<span class="go">array([[0., 5.],</span>
-<span class="go">       [5., 0.]])</span>
-</code></pre></div>
-
 
             <details class="quote">
               <summary>Source code in <code>src/free_matrix_laws/opvalued.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 8</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 7</span>
+<span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
@@ -795,92 +757,57 @@ here Hermitian makes the two coincide.)</p>
 <span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">covariance_map</span><span class="p">(</span><span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Apply the operator-valued *covariance map*</span>
-<span class="sd">    \\[</span>
-<span class="sd">        \eta(B) \;=\; \sum_{i=1}^s A_i\, B\, A_i,</span>
-<span class="sd">    \\]</span>
-<span class="sd">    where \\(A_1,\\ldots,A_s\\) are (typically Hermitian) matrices.</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">covariance_map</span><span class="p">(</span><span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Apply the completely positive (Kraus) map</span>
+<span class="sd">    $\eta(B) = \sum_{i=1}^s A_i\, B\, A_i^{\ast}$.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    B : (n, n) ndarray</span>
-<span class="sd">        Matrix the map acts on.</span>
-<span class="sd">    A : sequence of (n, n) ndarrays **or** a single array of shape (s, n, n)</span>
-<span class="sd">        The list/stack of matrices $A_i$. In many applications the $A_i$ are Hermitian,</span>
-<span class="sd">        so $A_i B A_i = A_i B A_i^*$. (The usual Kraus form uses $A_i B A_i^*$;</span>
-<span class="sd">        here Hermitian makes the two coincide.)</span>
+<span class="sd">        Square matrix the map acts on.</span>
+<span class="sd">    A : sequence of (n, n) ndarrays or (s, n, n) ndarray</span>
+<span class="sd">        Kraus operators $A_i$ (no self-adjointness assumed).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    (n, n) ndarray</span>
-<span class="sd">        The value of $\eta(B)$, with dtype promoted to `np.result_type(B.dtype, A.dtype)`.</span>
-
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    ValueError</span>
-<span class="sd">        If shapes are inconsistent.</span>
+<span class="sd">        The value of $\eta(B)$.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    • Complexity: $\mathcal O(s\,n^3)$.  </span>
-<span class="sd">    • If each $A_i$ is Hermitian, $\eta$ is self-adjoint w.r.t. the Hilbert--Schmidt inner product.</span>
-<span class="sd">    • Implementation uses batched matrix multiplies and sums over the stack of $A_i$.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
-<span class="sd">    &gt;&gt;&gt; A = [np.eye(2), 2*np.eye(2)]</span>
-<span class="sd">    &gt;&gt;&gt; B = np.array([[0., 1.],[1., 0.]])</span>
-<span class="sd">    &gt;&gt;&gt; covariance_map(B, A)</span>
-<span class="sd">    array([[0., 5.],</span>
-<span class="sd">           [5., 0.]])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    • Uses $A_i^{\ast}$ (conjugate transpose), not $A_i^{\mathsf T}$.  </span>
+<span class="sd">    • Accepts a list/tuple of $(n,n)$ or a stacked array $(s,n,n)$.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
-    <span class="n">A_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">B</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;B must be square (n,n); got shape </span><span class="si">{</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;B must be square (n,n); got </span><span class="si">{</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="c1"># Accept either (s,n,n) or a single (n,n) as A</span>
-    <span class="k">if</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A has shape </span><span class="si">{</span><span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">, expected </span><span class="si">{</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> to match B.&quot;</span><span class="p">)</span>
-        <span class="n">A_arr</span> <span class="o">=</span> <span class="n">A_arr</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># (1,n,n)</span>
-    <span class="k">elif</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A stack has shape </span><span class="si">{</span><span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">, expected (s,</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+    <span class="c1"># Normalize A to a stacked array (s,n,n)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">A</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">A_arr</span> <span class="o">=</span> <span class="n">A</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">A</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A has shape </span><span class="si">{</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">, expected </span><span class="si">{</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">A_arr</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;A must be sequence of (n,n) matrices or a (s,n,n) array.&quot;</span><span class="p">)</span>
+        <span class="c1"># Python sequence → stack</span>
+        <span class="n">A_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">A_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">A_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="c1"># Promote dtype sensibly (keep complex if present)</span>
-    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A stack has shape </span><span class="si">{</span><span class="n">A_arr</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">, expected (s,</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Promote dtype; ensure complex paths keep conjugation correct</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>
     <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">A_arr</span> <span class="o">=</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="c1"># Vectorized: (s,n,n) @ (n,n) -&gt; (s,n,n); then @ (s,n,n) -&gt; (s,n,n); sum over s -&gt; (n,n)</span>
-    <span class="n">tmp</span> <span class="o">=</span> <span class="n">A_arr</span> <span class="o">@</span> <span class="n">B</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">A_arr</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Vectorized Kraus: sum_i A_i B A_i^*</span>
+    <span class="n">A_dag</span> <span class="o">=</span> <span class="n">A_arr</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>   <span class="c1"># (s,n,n)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">A_arr</span> <span class="o">@</span> <span class="n">B</span>                         <span class="c1"># (s,n,n)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">A_dag</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># (n,n)</span>
     <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
             </details>
