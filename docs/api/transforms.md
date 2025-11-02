@@ -8,4 +8,6 @@
       members:
         - solve_cauchy_semicircle
         - solve_G
-        - _hfs_map
+        - semicircle_density
+        - get_density
+        - semicircle_density_scalar
