@@ -10,11 +10,13 @@ from .transforms import (
     semicircle_density, get_density,
     semicircle_density_scalar
 )
+from .ensembles import random_semicircle 
 
 __all__ = [
     "covariance_map", "eta",
     "solve_cauchy_semicircle", "solve_G",
     "semicircle_density", "get_density",
-    "semicircle_density_scalar"
+    "semicircle_density_scalar", 
+    "random_semicircle"
 ]
 

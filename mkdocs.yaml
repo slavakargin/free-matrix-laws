@@ -1,4 +1,6 @@
 site_name: free-matrix-laws
+site_url: https://slavakargin.github.io/free-matrix-laws/
+repo_url: https://github.com/slavakargin/free-matrix-laws
 theme:
   name: material
 plugins:
@@ -16,9 +18,12 @@ nav:
   - API:
     - Transforms: api/transforms.md
     - Operator-valued maps: api/opvalued.md
+    - Random Ensembles: api/ensembles.md
   - How-to: 
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
+    - Semicircle Cauchy transform solver: howto/solve_cauchy_semicircle.md
+    - Random Semicircle: howto/random_semicircle.md
 markdown_extensions:
   - admonition
   - fenced_code             
