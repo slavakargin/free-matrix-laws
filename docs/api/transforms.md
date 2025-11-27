@@ -7,6 +7,7 @@
       docstring_style: numpy
       members:
         - solve_cauchy_semicircle
+        - solve_cauchy_biased
         - solve_G
         - semicircle_density
         - get_density

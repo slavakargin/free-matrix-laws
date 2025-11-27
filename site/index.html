@@ -671,6 +671,27 @@ and small fixed-point solvers.</p>
 <p><strong>From GitHub (read-only users)</strong>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;git+https://github.com/slavakargin/free-matrix-laws.git@main&quot;</span>
 </code></pre></div></p>
+<h1 id="iterating-the-operator-valued-cauchy-transform">Iterating the operator-valued Cauchy transform</h1>
+<p>We solve the operator-valued semicircle equation
+$$
+z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z&gt;0,
+$$
+where <span class="arithmatex">\(\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast\)</span> is a completely positive (Kraus) map.</p>
+<h2 id="fixed-point-maps">Fixed-point maps</h2>
+<p>The simplest iteration is
+$$
+G \;\mapsto\; (\,zI - \eta(G)\,)^{-1}.
+$$</p>
+<p>Following Helton–Rashidi Far–Speicher (IMRN 2007), a numerically friendlier choice is the <em>half-averaged</em> step
+$$
+G \;\mapsto\; \tfrac12\Big[\,G \;+\; (\,zI - \eta(G)\,)^{-1}\Big],
+$$
+which damps oscillations while preserving the correct fixed point.</p>
+<blockquote>
+<p><strong>Reference.</strong> J. W. Helton, R. Rashidi Far, R. Speicher,<br />
+<em>Operator-valued Semicircular Elements: Solving a Quadratic Matrix Equation with Positivity Constraints</em>, IMRN (2007).</p>
+</blockquote>
+<p><strong>In code:</strong> use <code>free_matrix_laws.solve_cauchy_semicircle(z, A, ...)</code>, which implements the half-averaged step.</p>
 
 
 

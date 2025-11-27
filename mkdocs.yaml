@@ -23,6 +23,7 @@ nav:
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
     - Semicircle Cauchy transform solver: howto/solve_cauchy_semicircle.md
+    - Biased semicircle Cauch transform solver: howto/solve_cauchy_biased.md
     - Random Semicircle: howto/random_semicircle.md
 markdown_extensions:
   - admonition
