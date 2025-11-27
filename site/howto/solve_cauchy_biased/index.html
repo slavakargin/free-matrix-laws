@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://slavakargin.github.io/free-matrix-laws/howto/solve_cauchy_semicircle/">
+        <link rel="canonical" href="https://slavakargin.github.io/free-matrix-laws/howto/solve_cauchy_biased/">
       
       
-        <link rel="prev" href="../covariance_map/">
+        <link rel="prev" href="../solve_cauchy_semicircle/">
       
       
-        <link rel="next" href="../solve_cauchy_biased/">
+        <link rel="next" href="../random_semicircle/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Semicircle Cauchy transform solver - free-matrix-laws</title>
+        <title>Biased semicircle Cauch transform solver - free-matrix-laws</title>
       
     
     
@@ -65,11 +65,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#solving-the-operator-valued-cauchy-transform-gz" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -102,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Semicircle Cauchy transform solver
+              Biased semicircle Cauch transform solver
             
           </span>
         </div>
@@ -509,32 +504,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Semicircle Cauchy transform solver
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../solve_cauchy_semicircle/" class="md-nav__link">
         
   
   
@@ -545,68 +518,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#minimal-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Minimal example
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minimal example">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#scalar-reduction-sanity-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scalar reduction sanity check
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tips
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-gz-to-a-scalar-stieltjes-transform-and-density" class="md-nav__link">
-    <span class="md-ellipsis">
-      From \(G(z)\) to a scalar Stieltjes transform and density
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -616,10 +527,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../solve_cauchy_biased/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -630,6 +548,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -682,58 +601,6 @@
   
   
   
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#minimal-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Minimal example
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minimal example">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#scalar-reduction-sanity-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scalar reduction sanity check
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tips
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-gz-to-a-scalar-stieltjes-transform-and-density" class="md-nav__link">
-    <span class="md-ellipsis">
-      From \(G(z)\) to a scalar Stieltjes transform and density
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -752,82 +619,9 @@
   
 
 
-<h1 id="solving-the-operator-valued-cauchy-transform-gz">Solving the operator-valued Cauchy transform <span class="arithmatex">\(G(z)\)</span></h1>
-<p>This shows how to compute the matrix Cauchy transform <span class="arithmatex">\(G(z)\)</span> for the <strong>matrix semicircle</strong> via the fixed-point solver
-$$
-z\,G \;=\; I \;+\; \eta(G)\,G,\qquad \Im z&gt;0,\quad
-\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast.
-$$</p>
-<h2 id="minimal-example">Minimal example</h2>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fml</span>
+  <h1>Biased semicircle Cauch transform solver</h1>
 
-<span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span>
-<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-<span class="c1"># Kraus operators A_i (general complex case)</span>
-<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
-
-<span class="n">z</span> <span class="o">=</span> <span class="mf">0.3</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mf">0.02</span>  <span class="c1"># Im z &gt; 0</span>
-<span class="n">G</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">solve_cauchy_semicircle</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
-
-<span class="c1"># Residual check: || zG - I - eta(G)G || should be small</span>
-<span class="n">etaG</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">covariance_map</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">z</span><span class="o">*</span><span class="n">G</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">-</span> <span class="n">etaG</span> <span class="o">@</span> <span class="n">G</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;residual:&quot;</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="scalar-reduction-sanity-check">Scalar reduction sanity check</h3>
-<p>When all <span class="arithmatex">\(A_i=\sigma I\)</span>, the solution is <span class="arithmatex">\(G(z)=g(z),I\)</span> with the scalar semicircle Stieltjes transform
-$$
-g(z)=\frac{z-\sqrt{z^2-4c}}{2c},\qquad c=\sigma^2.
-$$</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fml</span>
-
-<span class="n">n</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span> <span class="mf">1.3</span>
-<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">sigma</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
-
-<span class="n">z</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mf">0.05</span>
-<span class="n">G</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">solve_cauchy_semicircle</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
-
-<span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="o">*</span><span class="n">z</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">c</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">c</span><span class="p">)</span>
-<span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">G</span> <span class="o">-</span> <span class="n">g</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;||G - gI||:&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="tips">Tips</h3>
-<ul>
-<li><strong>Imaginary part of <span class="arithmatex">\(z\)</span>:</strong> For densities at real <span class="arithmatex">\(x\)</span>, use <span class="arithmatex">\(z = x + i,\varepsilon\)</span> with <span class="arithmatex">\(\varepsilon \approx 10^{-2}\text{–}10^{-3}\)</span>.</li>
-<li><strong>Warm starts:</strong> Pass <code>G0</code> (e.g., the solution at a nearby <span class="arithmatex">\(z\)</span>) to accelerate convergence.</li>
-<li><strong>Input shapes:</strong> <span class="arithmatex">\(A\)</span> can be a list/tuple of <span class="arithmatex">\((n,n)\)</span> arrays or a stacked array of shape <span class="arithmatex">\((s,n,n)\)</span>.</li>
-<li><strong>Numerical stability:</strong> If the iteration stalls, increase <span class="arithmatex">\(\varepsilon\)</span>, relax <code>tol</code>, or cap <code>maxiter</code>.</li>
-</ul>
-<h3 id="from-gz-to-a-scalar-stieltjes-transform-and-density">From <span class="arithmatex">\(G(z)\)</span> to a scalar Stieltjes transform and density</h3>
-<p>The scalar transform is
-$$
-m(z) = \frac{1}{n} \mathrm{tr} \, G(z).
-$$
-For <span class="arithmatex">\(x\in\mathbb{R}\)</span> with <span class="arithmatex">\(z=x+i\varepsilon\)</span>,
-$$
-f(x) = -\frac{1}{\pi}\Im m(z).
-$$</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fml</span>
-
-<span class="n">n</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>           <span class="c1"># simple case</span>
-<span class="n">x</span><span class="p">,</span> <span class="n">eps</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1e-2</span>
-<span class="n">z</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">eps</span>
-
-<span class="n">G</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">solve_cauchy_semicircle</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
-<span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">G</span><span class="p">)</span><span class="o">/</span><span class="n">n</span>
-<span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;density ~&quot;</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-</code></pre></div>
-<h1 id="or-use-the-convenience-helper">Or use the convenience helper:</h1>
-<div class="highlight"><pre><span></span><code><span class="n">f2</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">semicircle_density</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;density (helper) ~&quot;</span><span class="p">,</span> <span class="n">f2</span><span class="p">)</span>
-</code></pre></div>
 
 
 
