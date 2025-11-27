@@ -217,3 +217,129 @@ def semicircle_density_scalar(x, c: float = 1.0):
     y = np.where(inside > 0.0, (1.0 / (2.0 * np.pi * c)) * np.sqrt(inside), 0.0)
     return y if x_arr.ndim else float(y)
 
+def hfsb_map(G: np.ndarray,
+             z: complex,
+             a0: np.ndarray,
+             A,
+             relax: float = 0.5) -> np.ndarray:
+    r'''
+    One step of the Helton–Far–Speicher style averaging for the **biased** operator-valued
+    semicircle. For $S=a_0 + \sum_i A_i \otimes X_i$ with semicircular $X_i$ and covariance
+    $\eta(B)=\sum_i A_i B A_i^\ast$, the Cauchy transform $G(z)$ solves
+    $$
+      G \;=\; (z I - a_0 - \eta(G))^{-1}
+      \quad\Longleftrightarrow\quad
+      (z I - a_0)\,G \;=\; I + \eta(G)\,G .
+    $$
+    Define $b := z\,(z I - a_0)^{-1}$ and the map
+    $$
+      \Phi(G) \;=\; [\,z I - b\,\eta(G)\,]^{-1} b ,
+    $$
+    then this routine returns the relaxed step
+    $$
+      G_{\text{new}} \;=\; (1-\text{relax})\,G \;+\; \text{relax}\,\Phi(G).
+    $$
+
+    Parameters
+    ----------
+    G : (n,n) ndarray
+        Current iterate (aiming for $G(z)$ with $\Im z>0$).
+    z : complex
+        Spectral parameter with $\Im z>0$.
+    a0 : (n,n) ndarray
+        Bias matrix $a_0$.
+    A : sequence[(n,n)] or (s,n,n) ndarray
+        Kraus operators defining $\eta$ (list/tuple or stacked array).
+    relax : float, default 0.5
+        Averaging parameter in $(0,1]$; use $0.5$ for robust damping.
+
+    Returns
+    -------
+    (n,n) ndarray
+    '''
+    n = G.shape[0]
+    I = np.eye(n, dtype=complex)
+    # b = z (z I - a0)^{-1}
+    b = z * la.inv(z * I - a0)
+    # Φ(G) = [z I - b η(G)]^{-1} b
+    Phi = la.inv(z * I - b @ eta(G, A)) @ b
+    return (1.0 - relax) * G + relax * Phi
+
+
+def solve_cauchy_biased(z: complex,
+                        a0: np.ndarray,
+                        A,
+                        G0: np.ndarray | None = None,
+                        tol: float = 1e-12,
+                        maxiter: int = 5000,
+                        relax: float = 0.5,
+                        return_info: bool = False):
+    r'''
+    Fixed-point solver for the **biased** operator-valued semicircle:
+    $$
+      G \;=\; (z I - a_0 - \eta(G))^{-1},
+      \qquad \Im z>0 .
+    $$
+
+    Initial guess chosen so that $\Im G(z)<0$ when $\Im z>0$
+
+    Iteration:
+    $$
+      G_{k+1} \;=\; (1-\text{relax})\,G_k \;+\; \text{relax}\,[\,z I - b\,\eta(G_k)\,]^{-1} b,
+      \quad b=z(z I - a_0)^{-1}.
+    $$
+
+    Convergence check uses the equation form
+    $$
+      R(G):= (z I - a_0)\,G - I - \eta(G)\,G
+    $$
+    and stops when $\|R(G)\|_{\mathrm{F}} \le \text{tol}$.
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter with $\Im z>0$.
+    a0 : (n,n) ndarray
+        Bias matrix.
+    A : sequence[(n,n)] or (s,n,n) ndarray
+        Kraus operators for $\eta$.
+    G0 : (n,n) ndarray, optional
+        Warm start; if None, uses $(\Im z)^{-1} i\,I$.
+    tol : float, default 1e-12
+        Frobenius-norm tolerance on the residual.
+    maxiter : int, default 5000
+        Iteration cap.
+    relax : float, default 0.5
+        Averaging parameter in $(0,1]$.
+    return_info : bool, default False
+        If True, also return a dict with residual and iterations.
+
+    Returns
+    -------
+    G : (n,n) ndarray
+    info : dict (only if return_info=True)
+        Keys: ``residual``, ``iters``.
+    '''
+    n = a0.shape[0]
+    I = np.eye(n, dtype=complex)
+    if G0 is None:
+        eps = float(np.imag(z))
+        if eps <= 0:
+            eps = 1e-2
+        #(Herglotz sign: Im G(z) < 0 for Im z > 0)
+        G = -1j * I / eps
+    else:
+        G = G0.astype(complex, copy=True)
+
+    for k in range(1, maxiter + 1):
+        G = hfsb_map(G, z, a0, A, relax=relax)
+        # residual: (zI - a0)G - I - eta(G)G
+        r = (z * I - a0) @ G - I - eta(G, A) @ G
+        res = la.norm(r, 'fro')
+        if res <= tol:
+            if return_info:
+                return G, {"residual": res, "iters": k}
+            return G
+    if return_info:
+        return G, {"residual": res, "iters": maxiter}
+    return G

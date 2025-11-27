@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.linalg as la
-from free_matrix_laws.transforms import _hfs_map
+from free_matrix_laws.transforms_old import _hfs_map
 from free_matrix_laws import covariance_map as eta
 
 def test_hfs_map_converges_and_satisfies_equation():

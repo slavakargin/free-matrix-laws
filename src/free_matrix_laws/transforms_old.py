@@ -116,7 +116,7 @@ def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
 solve_G = solve_cauchy_semicircle
 
 ##scalar observables
-def semisircle_density(x: float,
+def semicircle_density(x: float,
                 A,
                 eps: float = 1e-2,
                 G0=None,
@@ -182,7 +182,7 @@ def semisircle_density(x: float,
     return float(f)
 
 #public alias
-get_density = semisircle_density
+get_density = semicircle_density
 
 # ---- Extracted functions from the notebook ----
 

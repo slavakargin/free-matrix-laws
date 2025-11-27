@@ -1,11 +1,7 @@
 # How to use `covariance_map`
 
-Below is a minimal example. If you can't see the code block, your Markdown
-extensions/nav paths aren't wired correctly.
+Below is a minimal example. 
 
-```python
-print("hello!")
-```
 
     import numpy as np
     from free_matrix_laws import covariance_map as eta
