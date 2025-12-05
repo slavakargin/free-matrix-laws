@@ -11,4 +11,5 @@
         - solve_G
         - semicircle_density
         - get_density
+        - biased_semisircle_density
         - semicircle_density_scalar
