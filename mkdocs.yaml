@@ -24,8 +24,10 @@ nav:
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
     - Semicircle Cauchy transform solver: howto/solve_cauchy_semicircle.md
-    - Biased semicircle Cauch transform solver: howto/solve_cauchy_biased.md
+    - Biased semicircle Cauchy transform solver: howto/solve_cauchy_biased.md
     - Random Semicircle: howto/random_semicircle.md
+    - Semicircle density: howto/semicircle_density.md
+    - Biased semicircle density: howto/biased_semicircle_density.md
 markdown_extensions:
   - admonition
   - fenced_code             

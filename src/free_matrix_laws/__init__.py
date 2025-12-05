@@ -9,7 +9,8 @@ from .transforms import (
     solve_cauchy_semicircle, solve_G,
     semicircle_density, get_density,
     semicircle_density_scalar,
-    hfsb_map, solve_cauchy_biased
+    hfsb_map, solve_cauchy_biased,
+    biased_semicircle_density
 )
 
 from .ensembles import random_semicircle 
@@ -20,6 +21,7 @@ __all__ = [
     "semicircle_density", "get_density",
     "semicircle_density_scalar", 
     "random_semicircle",
-    "hfsb_map", "solve_cauchy_biased"
+    "hfsb_map", "solve_cauchy_biased",
+    "biased_semicircle_density"
 ]
 

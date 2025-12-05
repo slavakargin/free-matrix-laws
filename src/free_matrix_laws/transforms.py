@@ -116,25 +116,26 @@ def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
 solve_G = solve_cauchy_semicircle
 
 ##scalar observables
-def semicircle_density(x: float,
-                A,
-                eps: float = 1e-2,
-                G0=None,
-                tol: float = 1e-10,
-                maxiter: int = 10_000) -> float:
+def semicircle_density(
+    x: float,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    a0=None,
+) -> float:
     r'''
-    Stieltjes inversion for the **matrix semicircle** at a real point $x$.
+    Stieltjes inversion for the **matrix semicircle** (optionally with bias).
 
-    We first compute the operator-valued Cauchy transform $G(z)$ for
-    $z = x + i\,\varepsilon$ by solving
-    $$
-        z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0,
-    $$
-    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$,
-    and then return the scalar density via the normalized trace
-    $$
-        f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right).
-    $$
+    Unbiased case ($a_0$ is `None`): compute $G(z)$ for $z=x+i\varepsilon$ from
+    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \eta(B)=\sum_{i=1}^s A_i B A_i^\ast, $$
+    then return the scalar density
+    $$ f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right). $$
+
+    Biased case ($a_0\neq 0$): compute the Cauchy transform $G_{a_0+X}(z)$ via the
+    biased solver (internally equivalent to the half-averaged Helton–Rashidi
+    Far–Speicher iteration with $b=z(zI-a_0)^{-1}$), and apply the same reduction.
 
     Parameters
     ----------
@@ -143,14 +144,15 @@ def semicircle_density(x: float,
     A : sequence of $(n,n)$ arrays or stacked array $(s,n,n)$
         Kraus operators $A_i$ (no self-adjointness required).
     eps : float, default 1e-2
-        Imaginary offset $\varepsilon>0$. Smaller $\varepsilon$ gives a sharper
-        approximation but may need tighter tolerances.
+        Imaginary offset $\varepsilon>0$ used for $z=x+i\varepsilon$.
     G0 : (n,n) array, optional
-        Initial iterate for $G$ (default $-iI$ inside the solver).
+        Initial iterate for $G$ (passed to the solver).
     tol : float, default 1e-10
         Relative fixed-point tolerance for the solver.
     maxiter : int, default 10000
         Maximum iterations.
+    a0 : (n,n) array or `None`, default `None`
+        Bias matrix. If provided, computes the density for $a_0 + \sum_i A_i \otimes X_i$.
 
     Returns
     -------
@@ -159,9 +161,8 @@ def semicircle_density(x: float,
 
     Notes
     -----
-    This computes $m(z)=\tfrac{1}{n}\mathrm{tr}\,G(z)$ and applies the Stieltjes
-    formula $f(x)=-(1/\pi)\Im m(x+i\varepsilon)$.  See Helton–Rashidi Far–Speicher
-    (IMRN 2007) for the half-averaged fixed-point step used in the solver.
+    This computes $m(z)=\tfrac{1}{n}\mathrm{tr}\,G(z)$ and uses
+    $f(x)=-(1/\pi)\Im m(x+i\varepsilon)$.
     '''
     if eps <= 0:
         raise ValueError("eps must be > 0")
@@ -173,16 +174,45 @@ def semicircle_density(x: float,
         n = A.shape[0]
         A = A[None, ...]
     else:
+        A = list(A)
         n = A[0].shape[0]
 
+    if a0 is not None:
+        a0 = np.asarray(a0)
+        if a0.shape != (n, n):
+            raise ValueError(f"a0 must have shape {(n,n)}, got {a0.shape}")
+
     z = float(x) + 1j * float(eps)
-    G = solve_cauchy_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
+
+    if a0 is None:
+        G = solve_cauchy_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
+    else:
+        # default return of solve_cauchy_biased is G (not (G, info))
+        G = solve_cauchy_biased(z, a0, A, G0=G0, tol=tol, maxiter=maxiter)
+
     m = np.trace(G) / n
     f = (-1.0 / np.pi) * np.imag(m)
     return float(f)
 
 #public alias
 get_density = semicircle_density
+
+def biased_semicircle_density(
+    x: float,
+    a0,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+) -> float:
+    r'''
+    Convenience alias for the biased case:
+    $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
+    Calls `semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)`.
+    '''
+    return semicircle_density(x, A, eps=eps, G0=G0, tol=tol, maxiter=maxiter, a0=a0)
+
 
 
 def semicircle_density_scalar(x, c: float = 1.0):
