@@ -4,7 +4,13 @@
 free_matrix_laws: tools for matrix-/operator-valued free probability calculations.
 """
 
-from .opvalued import covariance_map, eta
+from .opvalued import (
+    covariance_map, eta,
+    symmetric_sinkhorn_scale,
+    symmetric_sinkhorn_apply,
+    symmetric_osi,
+    ds_distance,
+)
 from .transforms import (
     solve_cauchy_semicircle, solve_G,
     semicircle_density, get_density,
