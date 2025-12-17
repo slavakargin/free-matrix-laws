@@ -8,13 +8,11 @@
       
       
       
-        <link rel="canonical" href="https://slavakargin.github.io/free-matrix-laws/howto/random_semicircle/">
+        <link rel="canonical" href="https://slavakargin.github.io/free-matrix-laws/howto/cp_sinkhorn/">
       
       
-        <link rel="prev" href="../solve_cauchy_biased/">
+        <link rel="prev" href="../biased_semicircle_density/">
       
-      
-        <link rel="next" href="../semicircle_density/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +20,7 @@
     
     
       
-        <title>Random Semicircle - free-matrix-laws</title>
+        <title>CP Sinkhorn (symmetric OSI) - free-matrix-laws</title>
       
     
     
@@ -65,11 +63,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#random-wigner-gaussian-matrices-with-semicircle-scaling" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -102,7 +95,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Random Semicircle
+              CP Sinkhorn (symmetric OSI)
             
           </span>
         </div>
@@ -555,32 +548,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Random Semicircle
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../random_semicircle/" class="md-nav__link">
         
   
   
@@ -591,68 +562,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick start
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick start">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    <span class="md-ellipsis">
-      Options
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sanity-checks" class="md-nav__link">
-    <span class="md-ellipsis">
-      Sanity checks
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#histogram" class="md-nav__link">
-    <span class="md-ellipsis">
-      Histogram
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -708,10 +617,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../cp_sinkhorn/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -722,6 +638,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -751,58 +668,6 @@
   
   
   
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick start
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick start">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    <span class="md-ellipsis">
-      Options
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sanity-checks" class="md-nav__link">
-    <span class="md-ellipsis">
-      Sanity checks
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#histogram" class="md-nav__link">
-    <span class="md-ellipsis">
-      Histogram
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -821,59 +686,9 @@
   
 
 
-<h1 id="random-wigner-gaussian-matrices-with-semicircle-scaling">Random Wigner Gaussian matrices with semicircle scaling</h1>
-<p>This shows how to sample GOE/GUE-type matrices whose eigenvalues follow (as <span class="arithmatex">\(n\to\infty\)</span>) a semicircle law with variance <span class="arithmatex">\(c\)</span> (support <span class="arithmatex">\([-2\sqrt{c},\,2\sqrt{c}]\)</span>).</p>
-<h2 id="quick-start">Quick start</h2>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fml</span>
+  <h1>CP Sinkhorn (symmetric OSI)</h1>
 
-<span class="n">n</span> <span class="o">=</span> <span class="mi">300</span>
 
-<span class="c1"># Real symmetric (GOE-type), variance c=1</span>
-<span class="n">H_goe</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">random_semicircle</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-<span class="c1"># Complex Hermitian (GUE-type), variance c=0.5</span>
-<span class="n">H_gue</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">random_semicircle</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;complex&quot;</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c1"># Hermitian checks</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">H_goe</span><span class="p">,</span> <span class="n">H_goe</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">H_gue</span><span class="p">,</span> <span class="n">H_gue</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="options">Options</h3>
-<ul>
-<li><strong>field</strong>: <code>"real"</code> (GOE) or <code>"complex"</code> (GUE).</li>
-<li><strong>variance</strong>: <span class="arithmatex">\(c&gt;0\)</span>; spectrum concentrates on <span class="arithmatex">\([-2\sqrt{c},,2\sqrt{c}]\)</span>.</li>
-<li><strong>seed</strong>: integer or <code>numpy.random.Generator</code> for reproducibility.</li>
-</ul>
-<h3 id="sanity-checks">Sanity checks</h3>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span> <span class="mf">1.7</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">random_semicircle</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-<span class="c1"># Off-diagonal variance ≈ c/n (finite-n tolerance)</span>
-<span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">v_emp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;empirical offdiag var ~&quot;</span><span class="p">,</span> <span class="n">v_emp</span><span class="p">,</span> <span class="s2">&quot;target ~&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">/</span><span class="n">n</span><span class="p">)</span>
-
-<span class="c1"># Spectral radius ≈ 2*sqrt(c) (coarse finite-n check)</span>
-<span class="n">smax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">compute_uv</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;||H|| ~&quot;</span><span class="p">,</span> <span class="n">smax</span><span class="p">,</span> <span class="s2">&quot;target ~&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
-</code></pre></div>
-<h3 id="histogram">Histogram</h3>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-
-<span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="mf">1.0</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">fml</span><span class="o">.</span><span class="n">random_semicircle</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">lam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;eigenvalue&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;density&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Empirical spectrum vs. semicircle (c=1)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</code></pre></div>
 
 
 

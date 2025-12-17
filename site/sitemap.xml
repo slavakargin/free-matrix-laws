@@ -2,50 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/api/ensembles/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/api/opvalued/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/api/transforms/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/biased_semicircle_density/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/covariance_map/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
+    </url>
+    <url>
+         <loc>https://slavakargin.github.io/free-matrix-laws/howto/cp_sinkhorn/</loc>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/random_semicircle/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/semicircle_density/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/solve_cauchy_biased/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/howto/solve_cauchy_semicircle/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
     <url>
          <loc>https://slavakargin.github.io/free-matrix-laws/notebooks/10_semicircle_methods/</loc>
-         <lastmod>2025-12-05</lastmod>
+         <lastmod>2025-12-17</lastmod>
     </url>
 </urlset>

@@ -456,6 +456,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#free_matrix_laws.transforms.biased_semicircle_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      biased_semicircle_density
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#free_matrix_laws.transforms.semicircle_density_scalar" class="md-nav__link">
     <span class="md-ellipsis">
       semicircle_density_scalar
@@ -725,6 +734,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/cp_sinkhorn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CP Sinkhorn (symmetric OSI)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -807,6 +839,15 @@
   <a href="#free_matrix_laws.transforms.semicircle_density" class="md-nav__link">
     <span class="md-ellipsis">
       semicircle_density
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.transforms.biased_semicircle_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      biased_semicircle_density
     </span>
   </a>
   
@@ -1842,6 +1883,59 @@ Far–Speicher iteration with <span class="arithmatex">\(b=z(zI-a_0)^{-1}\)</spa
     <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">G</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
     <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.transforms.biased_semicircle_density" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">biased_semicircle_density</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convenience alias for the biased case:
+$$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im!\left(\frac{1}{n}\,\mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
+Calls <code>semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)</code>.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/free_matrix_laws/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">biased_semicircle_density</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">a0</span><span class="p">,</span>
+    <span class="n">A</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+    <span class="n">G0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10_000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Convenience alias for the biased case:</span>
+<span class="sd">    $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$</span>
+<span class="sd">    Calls `semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">semicircle_density</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="n">G0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="n">a0</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
