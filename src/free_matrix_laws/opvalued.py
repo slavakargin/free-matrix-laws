@@ -74,13 +74,20 @@ def _as_stack(A):
         return A[None, ...], "single"  # single Kraus operator
     raise TypeError("A must be list/tuple of (n,n) arrays, a stacked (s,n,n) array, or a single (n,n) array.")
 
-def _inv_sqrt_psd(M, eps=1e-12):
-    """Hermitian inverse square root via eigendecomposition; clips eigenvalues below eps."""
+
+def _inv_frac_power_psd(M, power: float, eps=1e-12):
+    """Hermitian inverse fractional power $M^{-power}$ via eigendecomposition; clips eigenvalues below eps."""    
     H = 0.5 * (M + M.conj().T)
     w, V = la.eigh(H)
+    w = np.real(w)
     w_clip = np.maximum(w, eps)
-    D_inv_sqrt = np.diag(w_clip**-0.5)
-    return V @ D_inv_sqrt @ V.conj().T
+    D = np.diag(w_clip ** (-power))
+    return V @ D @ V.conj().T
+
+def _inv_sqrt_psd(M, eps=1e-12):
+    """Hermitian inverse square root $M^{-1/2}$; clips eigenvalues below eps."""
+    return _inv_frac_power_psd(M, power=0.5, eps=eps)
+
 
 def _TI_TstarI(A_stack):
     """Compute T(I)=sum A A* and T*(I)=sum A* A for Kraus stack A."""
@@ -98,8 +105,8 @@ def symmetric_sinkhorn_scale(A, eps=1e-12, return_factors=False, preserve_input_
     One **symmetric OSI step**: given a CP map $T(X)=\sum_i A_i X A_i^\ast$,
     form
     $$
-      c_1 := \big(T(I)\big)^{-1/2}, \qquad
-      c_2 := \big(T^\ast(I)\big)^{-1/2},
+      c_1 := \big(T(I)\big)^{-1/4}, \qquad
+      c_2 := \big(T^\ast(I)\big)^{-1/4},
     $$
     and return Kraus operators $B_i := c_1 A_i c_2$ for $\mathcal S(T)=S_{c_1,c_2}(T)$.
 
@@ -125,8 +132,8 @@ def symmetric_sinkhorn_scale(A, eps=1e-12, return_factors=False, preserve_input_
     s, n, _ = A_stack.shape
 
     TI, TS = _TI_TstarI(A_stack)
-    c1 = _inv_sqrt_psd(TI, eps=eps)
-    c2 = _inv_sqrt_psd(TS, eps=eps)
+    c1 = _inv_frac_power_psd(TI, power=0.25, eps=eps)
+    c2 = _inv_frac_power_psd(TS, power=0.25, eps=eps)
 
     B_stack = np.empty_like(A_stack, dtype=complex)
     for i in range(s):
@@ -148,7 +155,7 @@ def symmetric_sinkhorn_apply(X, A, eps=1e-12):
     Apply the **symmetric OSI** scaled map $\mathcal S(T)$ to a matrix $X$.
 
     Given $T(X)=\sum_i A_i X A_i^\ast$ and
-    $c_1=(T(I))^{-1/2}$, $c_2=(T^\ast(I))^{-1/2}$,
+    $c_1=(T(I))^{-1/4}$, $c_2=(T^\ast(I))^{-1/4}$,
     this returns
     $$
       \mathcal S(T)(X) \;=\; \sum_i (c_1 A_i c_2)\, X \,(c_1 A_i c_2)^\ast.

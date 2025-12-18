@@ -63,6 +63,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#how-to-normalize-a-cp-map-via-symmetric-osi" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -626,6 +631,21 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    CP Sinkhorn (symmetric OSI)
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -638,6 +658,79 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-step-scale-the-kraus-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      One step: scale the Kraus operators
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apply-the-scaled-map-to-a-matrix-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply the scaled map to a matrix \(X\)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iterate-to-near-doubly-stochastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Iterate to near doubly stochastic
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -668,6 +761,70 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-step-scale-the-kraus-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      One step: scale the Kraus operators
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apply-the-scaled-map-to-a-matrix-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply the scaled map to a matrix \(X\)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iterate-to-near-doubly-stochastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Iterate to near doubly stochastic
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -686,9 +843,67 @@
   
 
 
-  <h1>CP Sinkhorn (symmetric OSI)</h1>
+<h1 id="how-to-normalize-a-cp-map-via-symmetric-osi">How to normalize a CP map via symmetric OSI</h1>
+<p>Given a CP map
+$$
+T(X)=\sum_{i=1}^s A_i X A_i^\ast,
+$$
+one symmetric OSI step forms
+$$
+c_1 = \big(T(I)\big)^{-1/2}, \qquad
+c_2 = \big(T^\ast(I)\big)^{-1/2},
+$$
+and produces scaled Kraus operators
+$$
+B_i = c_1 A_i c_2,
+$$
+so that <span class="arithmatex">\(\mathcal S(T)(X)=\sum_i B_i X B_i^\ast\)</span>.
+Iterating this step often moves <span class="arithmatex">\(T\)</span> toward the <strong>doubly stochastic</strong> class (<span class="arithmatex">\(T(I)=I\)</span>, <span class="arithmatex">\(T^\ast(I)=I\)</span>).</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">symmetric_sinkhorn_scale</span><span class="p">,</span>
+    <span class="n">symmetric_sinkhorn_apply</span><span class="p">,</span>
+    <span class="n">symmetric_osi</span><span class="p">,</span>
+    <span class="n">ds_distance</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Your Kraus operators can be a <strong>list/tuple</strong> of shape <code>(n,n)</code> arrays or a <strong>stacked</strong> array of shape <code>(s,n,n)</code>.</p>
+<h2 id="one-step-scale-the-kraus-operators">One step: scale the Kraus operators</h2>
+<div class="highlight"><pre><span></span><code><span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
 
-
+<span class="n">B</span> <span class="o">=</span> <span class="n">symmetric_sinkhorn_scale</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>     <span class="c1"># returns scaled Kraus {B_i}</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DS distance before:&quot;</span><span class="p">,</span> <span class="n">ds_distance</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DS distance after :&quot;</span><span class="p">,</span> <span class="n">ds_distance</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>
+</code></pre></div>
+<p>Here <code>ds_distance(T) = ||T(I)-I||_F^2 + ||T^\ast(I)-I||_F^2</code> is a convenient progress metric.</p>
+<h2 id="apply-the-scaled-map-to-a-matrix-x">Apply the scaled map to a matrix <span class="arithmatex">\(X\)</span></h2>
+<div class="highlight"><pre><span></span><code><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">symmetric_sinkhorn_apply</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>  <span class="c1"># uses one symmetric scaling step internally</span>
+<span class="c1"># Equivalent to:</span>
+<span class="c1"># B = symmetric_sinkhorn_scale(A, preserve_input_type=False)</span>
+<span class="c1"># Y2 = sum(Bi @ X @ Bi.conj().T for Bi in B)</span>
+</code></pre></div>
+<h2 id="iterate-to-near-doubly-stochastic">Iterate to near doubly stochastic</h2>
+<div class="highlight"><pre><span></span><code><span class="n">B_final</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">symmetric_osi</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">return_history</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;iters:&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;iters&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;final DS distance:&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;ds&quot;</span><span class="p">])</span>
+</code></pre></div>
+<p>If <code>info["ds"]</code> is tiny (e.g., <span class="arithmatex">\(\le 10^{-10}\)</span>), the map is numerically close to DS.</p>
+<h2 id="tips">Tips</h2>
+<ul>
+<li><strong>Singular cases:</strong> If <span class="arithmatex">\(T(I)\)</span> or <span class="arithmatex">\(T^\ast(I)\)</span> is ill-conditioned, the implementation uses a small eigenvalue floor <code>eps</code> inside the inverse square roots. Raise <code>eps</code> if you see numerical instabilities.</li>
+<li><strong>Container type:</strong> If you pass a list, you’ll get a list back; for a stacked array, a stacked array comes back (configurable via <code>preserve_input_type</code>).</li>
+<li><strong>Composition:</strong> Returning scaled Kraus operators is convenient when you want to reuse them with other routines (e.g., covariance maps or resolvent solvers).</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li>API: <a href="../../api/opvalued/">opvalued (Sinkhorn helpers)</a></li>
+</ul>
+<div class="highlight"><pre><span></span><code>
+</code></pre></div>
 
 
 
