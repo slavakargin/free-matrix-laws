@@ -373,3 +373,289 @@ def solve_cauchy_biased(z: complex,
     if return_info:
         return G, {"residual": res, "iters": maxiter}
     return G
+
+
+
+def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.ndarray:
+    r'''
+    Build the regularized linearization parameter
+    $$
+      \Lambda_\varepsilon(z)
+      =
+      \begin{bmatrix}
+        z I_{k} & 0 \\
+        0 & i\varepsilon\, I_{n-k}
+      \end{bmatrix},
+    $$
+    where $k=\text{block\_size}$.
+
+    Notes
+    -----
+    This is the standard regularization used when extracting the $(1,1)$ corner
+    (or more generally the top-left $k\times k$ corner) from the resolvent of
+    a self-adjoint linearization.
+    '''
+    if n <= 0:
+        raise ValueError("n must be positive.")
+    if not (1 <= block_size <= n):
+        raise ValueError(f"block_size must be in {{1,...,n}}; got {block_size}.")
+    if eps_reg <= 0:
+        raise ValueError("eps_reg must be > 0.")
+
+    Lam = (1j * float(eps_reg)) * np.eye(n, dtype=complex)
+    Lam[:block_size, :block_size] = complex(z) * np.eye(block_size, dtype=complex)
+    return Lam
+
+
+def _hfsc_map(
+    G: np.ndarray,
+    z: complex,
+    a0: np.ndarray,
+    A,
+    eps_reg: float,
+    block_size: int = 1,
+) -> np.ndarray:
+    r'''
+    One HFSC half-averaged iteration step for a linearized polynomial problem.
+
+    Given a self-adjoint linearization
+    $$
+      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i
+    $$
+    (with $X_i$ semicircular), define
+    $$
+      b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
+      \qquad
+      \eta(B) := \sum_{i=1}^s A_i\,B\,A_i^\ast.
+    $$
+    The HFSC step is
+    $$
+      G \mapsto \frac12\Big[G + W\Big],
+      \qquad
+      W := \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z).
+    $$
+
+    Notes
+    -----
+    This is a low-level routine. Most users should call
+    `solve_cauchy_linearized` or `polynomial_density`.
+    '''
+    G = np.asarray(G)
+    a0 = np.asarray(a0)
+
+    if G.ndim != 2 or G.shape[0] != G.shape[1]:
+        raise ValueError(f"G must be square; got {G.shape!r}")
+    if a0.shape != G.shape:
+        raise ValueError(f"a0 must have shape {G.shape!r}; got {a0.shape!r}")
+
+    n = G.shape[0]
+    I = np.eye(n, dtype=complex)
+
+    Lam = _lambda_eps(z, n, eps_reg=eps_reg, block_size=block_size)
+
+    # b = z * (Lam - a0)^{-1}
+    b = complex(z) * la.solve(Lam - a0, I)
+
+    # W = (z I - b eta(G))^{-1} b   (use solve instead of inv)
+    M = complex(z) * I - b @ eta(G, A)
+    W = la.solve(M, b)
+
+    return 0.5 * (G + W)
+
+
+def solve_cauchy_linearized(
+    z: complex,
+    a0: np.ndarray,
+    A,
+    *,
+    eps_reg: float = 1e-6,
+    block_size: int = 1,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+):
+    r'''
+    Solve for the regularized “quasi-resolvent” fixed point associated to a
+    self-adjoint linearization $L_p$.
+
+    We assume a self-adjoint linearization
+    $$
+      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i,
+    $$
+    with semicircular $X_i$, and we form
+    $$
+      b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
+      \qquad
+      \eta(B) := \sum_{i=1}^s A_i\,B\,A_i^\ast,
+    $$
+    where
+    $$
+    \Lambda_\varepsilon(z)=\operatorname{diag} \big(z I_k,\ i\varepsilon\, I_{n-k}\big), \qquad k=\text{block\_size}.
+    $$
+
+    The iteration uses the half-averaged update
+    $$
+      G_{new} = \frac12\Big[G + \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z)\Big],
+    $$
+    and stops when $\|G_{new}-G\|_F \le \text{tol}\,\|G\|_F$ (relative Frobenius criterion).
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter with $\Im z>0$ (typically $z=x+i\,\varepsilon$).
+    a0 : (n,n) array
+        The bias / constant term of the linearization.
+    A : sequence of (n,n) arrays or stacked array (s,n,n)
+        Coefficients $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    eps_reg : float, default 1e-6
+        Regularization parameter in $\Lambda_\varepsilon(z)$ (used on the lower block).
+    block_size : int, default 1
+        Size $k$ of the distinguished top-left block (the one used to recover the scalar Cauchy transform).
+    G0 : (n,n) array, optional
+        Initial iterate. If None, uses $G_0 = (1/z)I$.
+    tol : float, default 1e-10
+        Relative tolerance.
+    maxiter : int, default 10000
+        Maximum number of iterations.
+    return_info : bool, default False
+        If True, also return a dict with diagnostics.
+
+    Returns
+    -------
+    G : (n,n) array
+        Approximation to the fixed point $G(z,b_\varepsilon(z))$.
+    info : dict (optional)
+        Keys: 'iters', 'last_diff'.
+
+    Notes
+    -----
+    After computing $G(z,b_\varepsilon(z))$, the scalar Cauchy transform of $p$
+    is obtained from the distinguished corner via
+    $$
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,\big(G(z,b_\varepsilon(z))\big)_{11},
+    $$
+    with $k=\text{block\_size}$ and $(\cdot)_{11}$ the top-left $k\times k$ block.
+    '''
+    a0 = np.asarray(a0)
+    if a0.ndim != 2 or a0.shape[0] != a0.shape[1]:
+        raise ValueError(f"a0 must be square; got {a0.shape!r}")
+    n = a0.shape[0]
+
+    if G0 is None:
+        G = (1.0 / complex(z)) * np.eye(n, dtype=complex)
+    else:
+        G = np.asarray(G0, dtype=complex)
+        if G.shape != (n, n):
+            raise ValueError(f"G0 must have shape {(n,n)!r}; got {G.shape!r}")
+
+    last_diff = np.inf
+    for k in range(1, maxiter + 1):
+        G1 = _hfsc_map(G, z, a0, A, eps_reg=eps_reg, block_size=block_size)
+        diff = la.norm(G1 - G, "fro")
+        denom = max(1.0, la.norm(G, "fro"))
+        last_diff = diff
+
+        if diff <= tol * denom:
+            G = G1
+            break
+
+        G = G1
+
+    if return_info:
+        return G, {"iters": k, "last_diff": float(last_diff)}
+    return G
+
+
+def polynomial_density(
+    x: float,
+    a0: np.ndarray,
+    A,
+    *,
+    eps: float = 1e-2,
+    eps_reg: float | None = None,
+    block_size: int = 1,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+) -> float:
+    r'''
+    Stieltjes inversion for a self-adjoint polynomial $p$ via a self-adjoint linearization.
+
+    We evaluate at $z=x+i\,\varepsilon$ and compute the regularized fixed point
+    $G(z,b_\varepsilon(z))$ associated to a self-adjoint linearization
+    $L_p=a_0+\sum_i A_i\otimes X_i$.
+
+    The scalar Cauchy transform is extracted from the distinguished corner:
+    $$
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,\big(G(z,b_\varepsilon(z))\big)_{11},
+    $$
+    and the density is approximated by
+    $$
+      f(x) \approx -\frac{1}{\pi}\,\Im\, m_p(x+i\varepsilon).
+    $$
+
+    Parameters
+    ----------
+    x : float
+        Real evaluation point.
+    a0 : (n,n) array
+        Constant term of the self-adjoint linearization.
+    A : sequence of (n,n) arrays or stacked array (s,n,n)
+        Coefficients defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    eps : float, default 1e-2
+        Imaginary offset in $z=x+i\,\varepsilon$ for Stieltjes inversion.
+    eps_reg : float, optional
+        Regularization used in $\Lambda_\varepsilon(z)$. If None, uses eps.
+    block_size : int, default 1
+        Size $k$ of the distinguished top-left block.
+    G0 : (n,n) array, optional
+        Warm start for the solver.
+    tol : float, default 1e-10
+        Relative tolerance for the fixed point.
+    maxiter : int, default 10000
+        Maximum iterations.
+    return_info : bool, default False
+        If True, also return solver diagnostics.
+
+    Returns
+    -------
+    float
+        Approximation to the density $f(x)$.
+    '''
+    if eps <= 0:
+        raise ValueError("eps must be > 0.")
+    z = float(x) + 1j * float(eps)
+    if eps_reg is None:
+        eps_reg = float(eps)
+
+    G, info = solve_cauchy_linearized(
+        z,
+        a0,
+        A,
+        eps_reg=eps_reg,
+        block_size=block_size,
+        G0=G0,
+        tol=tol,
+        maxiter=maxiter,
+        return_info=True,
+    )
+
+    k = int(block_size)
+    G11 = G[:k, :k]
+    m = np.trace(G11) / k
+    f = (-1.0 / np.pi) * np.imag(m)
+
+    if return_info:
+        info = dict(info)
+        info["z"] = z
+        info["m"] = complex(m)
+        info["density"] = float(f)
+        return float(f), info
+
+    return float(f)
+
+
+# Backward-compatible alias (your old name)
+get_density_C = polynomial_density

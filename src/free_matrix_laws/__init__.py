@@ -16,7 +16,9 @@ from .transforms import (
     semicircle_density, get_density,
     semicircle_density_scalar,
     hfsb_map, solve_cauchy_biased,
-    biased_semicircle_density
+    biased_semicircle_density,
+    solve_cauchy_linearized,
+    polynomial_density, get_density_C
 )
 
 from .ensembles import random_semicircle 
@@ -28,6 +30,12 @@ __all__ = [
     "semicircle_density_scalar", 
     "random_semicircle",
     "hfsb_map", "solve_cauchy_biased",
-    "biased_semicircle_density"
+    "biased_semicircle_density",
+    "symmetric_sinkhorn_scale",
+    "symmetric_sinkhorn_apply",
+    "symmetric_osi",
+    "ds_distance", 
+    "solve_cauchy_linearized", 
+    "polynomial_density", "get_density_C"
 ]
 
