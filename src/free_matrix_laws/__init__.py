@@ -18,7 +18,7 @@ from .transforms import (
     hfsb_map, solve_cauchy_biased,
     biased_semicircle_density,
     solve_cauchy_linearized,
-    polynomial_density, get_density_C
+    polynomial_semicircle_density, polynomial_density, get_density_C
 )
 
 from .ensembles import random_semicircle 
@@ -36,6 +36,6 @@ __all__ = [
     "symmetric_osi",
     "ds_distance", 
     "solve_cauchy_linearized", 
-    "polynomial_density", "get_density_C"
+    "polynomial_semicircle_density", "polynomial_density", "get_density_C"
 ]
 

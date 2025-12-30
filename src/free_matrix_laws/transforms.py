@@ -567,7 +567,7 @@ def solve_cauchy_linearized(
     return G
 
 
-def polynomial_density(
+def polynomial_semicircle_density(
     x: float,
     a0: np.ndarray,
     A,
@@ -657,5 +657,6 @@ def polynomial_density(
     return float(f)
 
 
-# Backward-compatible alias (your old name)
-get_density_C = polynomial_density
+# Aliases
+polynomial_density = polynomial_semicircle_density
+get_density_C = polynomial_semicircle_density
