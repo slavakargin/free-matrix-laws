@@ -9,7 +9,7 @@ description = "Calculations for matrix-/operator-valued free probability."
 authors = [{name = "V. Kargin"}]
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["numpy>=1.22"]
+dependencies = ["numpy>=1.26,<2.1"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
