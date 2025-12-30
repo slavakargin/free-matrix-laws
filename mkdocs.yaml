@@ -28,6 +28,7 @@ nav:
     - Random Semicircle: howto/random_semicircle.md
     - Semicircle density: howto/semicircle_density.md
     - Biased semicircle density: howto/biased_semicircle_density.md
+    - Polynomial semicircle (linearization): howto/polynomial_semicircle.md
     - CP Sinkhorn (symmetric OSI): howto/cp_sinkhorn.md
 markdown_extensions:
   - admonition
