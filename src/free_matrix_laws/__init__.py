@@ -19,7 +19,8 @@ from .transforms import (
     biased_semicircle_density,
     solve_cauchy_linearized,
     polynomial_semicircle_density, polynomial_density, get_density_C,
-    semicircle_cauchy_scalar
+    semicircle_cauchy_scalar,
+    matrix_cauchy_semicircle_reference
 )
 
 from .ensembles import random_semicircle 
@@ -38,6 +39,7 @@ __all__ = [
     "ds_distance", 
     "solve_cauchy_linearized", 
     "polynomial_semicircle_density", "polynomial_density", "get_density_C",
-    "semicircle_cauchy_scalar"
+    "semicircle_cauchy_scalar",
+    "matrix_cauchy_semicircle_reference"
 ]
 
