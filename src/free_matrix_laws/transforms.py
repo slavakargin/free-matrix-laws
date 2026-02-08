@@ -689,7 +689,7 @@ polynomial_density = polynomial_semicircle_density
 get_density_C = polynomial_semicircle_density
 
 
-def matrix_cauchy_semicircle_reference(w, b, *, c: float = 1.0, n_quad: int = 256):
+def cauchy_matrix_semicircle_reference(w, b, *, c: float = 1.0, n_quad: int = 256):
     r"""
     Reference (brute-force) matrix Cauchy transform for a scalar semicircle.
 

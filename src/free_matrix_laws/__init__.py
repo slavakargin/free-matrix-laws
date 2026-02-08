@@ -20,7 +20,7 @@ from .transforms import (
     solve_cauchy_linearized,
     polynomial_semicircle_density, polynomial_density, get_density_C,
     semicircle_cauchy_scalar,
-    matrix_cauchy_semicircle_reference
+    cauchy_matrix_semicircle_reference
 )
 
 from .ensembles import random_semicircle 
@@ -40,6 +40,6 @@ __all__ = [
     "solve_cauchy_linearized", 
     "polynomial_semicircle_density", "polynomial_density", "get_density_C",
     "semicircle_cauchy_scalar",
-    "matrix_cauchy_semicircle_reference"
+    "cauchy_matrix_semicircle_reference"
 ]
 
