@@ -247,6 +247,32 @@ def semicircle_density_scalar(x, c: float = 1.0):
     y = np.where(inside > 0.0, (1.0 / (2.0 * np.pi * c)) * np.sqrt(inside), 0.0)
     return y if x_arr.ndim else float(y)
 
+def semicircle_cauchy_scalar(z, c: float = 1.0):
+    r"""
+    Scalar Cauchy (Stieltjes) transform of the Wigner semicircle law with variance c>0.
+
+    For c=1 (support [-2,2]):
+        G(z) = (z - sqrt(z^2 - 4))/2
+
+    More generally (support [-2*sqrt(c), 2*sqrt(c)]):
+        G(z) = (z - sqrt(z^2 - 4c)) / (2c)
+
+    The square-root branch is chosen so that Im(z)>0 => Im(G(z))<0.
+    For boundary values on the real line, use z = x + 1j*eps with eps>0.
+    """
+    if c <= 0:
+        raise ValueError("c must be > 0")
+
+    z_arr = np.asarray(z, dtype=np.complex128)
+    disc = np.sqrt(z_arr**2 - 4.0 * c)
+
+    # Enforce Herglotz symmetry: Im(z)>0 -> Im(G)<0 (and vice versa)
+    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
+
+    G = (z_arr - disc) / (2.0 * c)
+    return G if z_arr.ndim else complex(G)
+
+
 def hfsb_map(G: np.ndarray,
              z: complex,
              a0: np.ndarray,

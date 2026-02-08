@@ -13,5 +13,6 @@
         - get_density
         - biased_semicircle_density
         - semicircle_density_scalar
+        - semicircle_cauchy_scalar
         - solve_cauchy_linearized
         - polynomial_density
