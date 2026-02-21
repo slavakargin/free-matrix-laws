@@ -691,14 +691,14 @@ get_density_C = polynomial_semicircle_density
 
 def cauchy_matrix_semicircle_reference(w, b, *, c: float = 1.0, n_quad: int = 256):
     r"""
-    Reference (brute-force) matrix Cauchy transform for a scalar semicircle.
+    Reference (brute-force) Cauchy transform for a simple matrix semicircle $b \otimes s$.
 
     We compute the matrix-valued Cauchy transform
     $$
       G(w;b)\;=\;\mathbb{E}\big[(w - bS)^{-1}\big]
       \;=\;\int_{-2\sqrt{c}}^{2\sqrt{c}} (w - tb)^{-1}\, f_c(t)\,dt,
     $$
-    where $S$ is a *scalar* Wigner semicircle with variance $c>0$ and density
+    where $S$ is a *scalar* semicircle with variance $c>0$ and density
     $$
       f_c(t)=\frac{1}{2\pi c}\sqrt{4c-t^2}\,\mathbf 1_{\{|t|\le 2\sqrt c\}}.
     $$
@@ -711,7 +711,7 @@ def cauchy_matrix_semicircle_reference(w, b, *, c: float = 1.0, n_quad: int = 25
     $$
       G(w;b)=\frac{2}{\pi}\int_{-1}^1 (w-2\sqrt c\,x\,b)^{-1}\sqrt{1-x^2}\,dx.
     $$
-    The weight $\sqrt{1-x^2}$ suggests Gauss–Chebyshev quadrature of the 2nd kind:
+    The weight $\sqrt{1-x^2}$ suggests Gauss-Chebyshev quadrature of the 2nd kind:
     $$
       x_k=\cos\frac{k\pi}{n+1},\qquad
       \alpha_k=\frac{2}{n+1}\sin^2\frac{k\pi}{n+1},

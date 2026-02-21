@@ -19,11 +19,17 @@ from .transforms import (
     biased_semicircle_density,
     solve_cauchy_linearized,
     polynomial_semicircle_density, polynomial_density, get_density_C,
-    semicircle_cauchy_scalar,
-    cauchy_matrix_semicircle_reference
+    semicircle_cauchy_scalar
 )
 
-from .ensembles import random_semicircle 
+from .ensembles import random_semicircle
+
+from .quadrature import (
+    cauchy_matrix_semicircle,
+    h_matrix_semicircle,
+    G_from_h,
+    density_scalar_quadrature,
+)
 
 __all__ = [
     "covariance_map", "eta",
@@ -40,6 +46,9 @@ __all__ = [
     "solve_cauchy_linearized", 
     "polynomial_semicircle_density", "polynomial_density", "get_density_C",
     "semicircle_cauchy_scalar",
-    "cauchy_matrix_semicircle_reference"
+    "cauchy_matrix_semicircle",
+    "h_matrix_semicircle",
+    "G_from_h",
+    "density_scalar_quadrature",
 ]
 

@@ -16,4 +16,3 @@
         - semicircle_cauchy_scalar
         - solve_cauchy_linearized
         - polynomial_density
-        - cauchy_matrix_semicircle_reference

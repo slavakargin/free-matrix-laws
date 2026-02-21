@@ -20,6 +20,7 @@ nav:
     - Transforms: api/transforms.md
     - Operator-valued maps: api/opvalued.md
     - Random Ensembles: api/ensembles.md
+    - Quadrature (brute-force): api/quadrature.md
   - How-to: 
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
@@ -30,6 +31,7 @@ nav:
     - Biased semicircle density: howto/biased_semicircle_density.md
     - Polynomial semicircle (linearization): howto/polynomial_semicircle.md
     - CP Sinkhorn (symmetric OSI): howto/cp_sinkhorn.md
+    - Quadrature-based Cauchy transform: howto/quadrature.md
 markdown_extensions:
   - admonition
   - fenced_code             
@@ -40,4 +42,3 @@ markdown_extensions:
       generic: true
 extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-
