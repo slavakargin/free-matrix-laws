@@ -19,7 +19,7 @@ adaptive Gauss--Kronrod quadrature (``scipy.integrate.quad``), with the
 integration contour shifted slightly into the upper half-plane
 ($x \mapsto x + i\varepsilon$) to regularize the pole on the real axis.
 
-The companion function :func:`h_matrix_semicircle` computes the
+The companion function :func:`h_matrix_semicircle_bruteforce` computes the
 subordination-style "h-function"
 $$
     h_b(w) \;=\; G_b(w)^{-1} - w,
@@ -113,7 +113,7 @@ def _matrix_integrand(
 # Public API
 # ---------------------------------------------------------------------------
 
-def cauchy_matrix_semicircle(
+def cauchy_matrix_semicircle_bruteforce(
     w: np.ndarray,
     b: np.ndarray,
     *,
@@ -183,16 +183,16 @@ def cauchy_matrix_semicircle(
     --------
     free_matrix_laws.transforms.solve_cauchy_semicircle :
         Much faster fixed-point solver (preferred for production).
-    h_matrix_semicircle :
+    h_matrix_semicircle_bruteforce :
         The companion "h-function" $h_b(w) = G_b(w)^{-1} - w$.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from free_matrix_laws.quadrature import cauchy_matrix_semicircle
+    >>> from free_matrix_laws.quadrature import cauchy_matrix_semicircle_bruteforce
     >>> b = np.array([[1, 0], [0, 0.5]])
     >>> w = (0.5 + 0.1j) * np.eye(2)
-    >>> G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+    >>> G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
     >>> G.shape
     (2, 2)
     """
@@ -200,7 +200,7 @@ def cauchy_matrix_semicircle(
         from scipy.integrate import quad
     except ImportError as exc:
         raise ImportError(
-            "cauchy_matrix_semicircle requires scipy.  "
+            "cauchy_matrix_semicircle_bruteforce requires scipy.  "
             "Install it with:  pip install scipy"
         ) from exc
 
@@ -234,7 +234,7 @@ def cauchy_matrix_semicircle(
     return result
 
 
-def h_matrix_semicircle(
+def h_matrix_semicircle_bruteforce(
     w: np.ndarray,
     b: np.ndarray,
     *,
@@ -251,7 +251,7 @@ def h_matrix_semicircle(
         h_b(w) \;=\; G_b(w)^{-1} \;-\; w,
     $$
     where $G_b(w)$ is the matrix-valued Cauchy transform of $b \otimes X$
-    obtained by :func:`cauchy_matrix_semicircle`.
+    obtained by :func:`cauchy_matrix_semicircle_bruteforce`.
 
     Parameters
     ----------
@@ -261,7 +261,7 @@ def h_matrix_semicircle(
         Deterministic coefficient matrix.
     eps : float, default ``1e-3``
         Imaginary shift for regularization (passed to
-        :func:`cauchy_matrix_semicircle`).
+        :func:`cauchy_matrix_semicircle_bruteforce`).
     x_min, x_max : float
         Integration limits (passed through).
     quad_opts : dict, optional
@@ -274,20 +274,20 @@ def h_matrix_semicircle(
 
     See Also
     --------
-    cauchy_matrix_semicircle : The underlying Cauchy-transform computation.
+    cauchy_matrix_semicircle_bruteforce : The underlying Cauchy-transform computation.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from free_matrix_laws.quadrature import h_matrix_semicircle
+    >>> from free_matrix_laws.quadrature import h_matrix_semicircle_bruteforce
     >>> b = np.eye(3)
     >>> w = (0.5 + 0.05j) * np.eye(3)
-    >>> h = h_matrix_semicircle(w, b, eps=1e-3)
+    >>> h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
     >>> h.shape
     (3, 3)
     """
     w = np.asarray(w, dtype=np.complex128)
-    G = cauchy_matrix_semicircle(
+    G = cauchy_matrix_semicircle_bruteforce(
         w, b, eps=eps, x_min=x_min, x_max=x_max, quad_opts=quad_opts
     )
     return la.inv(G) - w
@@ -320,22 +320,22 @@ def G_from_h(h: np.ndarray, w: np.ndarray) -> np.ndarray:
 
     See Also
     --------
-    h_matrix_semicircle :
+    h_matrix_semicircle_bruteforce :
         Computes $h_b(w)$ from $w$ and $b$ via quadrature.
-    cauchy_matrix_semicircle :
+    cauchy_matrix_semicircle_bruteforce :
         Computes $G_b(w)$ directly via quadrature.
 
     Examples
     --------
     >>> import numpy as np
     >>> from free_matrix_laws.quadrature import (
-    ...     cauchy_matrix_semicircle, h_matrix_semicircle, G_from_h,
+    ...     cauchy_matrix_semicircle_bruteforce, h_matrix_semicircle_bruteforce, G_from_h,
     ... )
     >>> b = np.eye(2)
     >>> w = (0.5 + 0.1j) * np.eye(2)
-    >>> h = h_matrix_semicircle(w, b, eps=1e-3)
+    >>> h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
     >>> G_recovered = G_from_h(h, w)
-    >>> G_direct    = cauchy_matrix_semicircle(w, b, eps=1e-3)
+    >>> G_direct    = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
     >>> np.allclose(G_recovered, G_direct)
     True
     """
@@ -405,7 +405,7 @@ def density_scalar_quadrature(
     # integration shift.
     eps_quad = min(eps, 1e-3)
 
-    G = cauchy_matrix_semicircle(
+    G = cauchy_matrix_semicircle_bruteforce(
         w, b, eps=eps_quad, x_min=x_min, x_max=x_max, quad_opts=quad_opts
     )
     m = np.trace(G) / n
