@@ -16,3 +16,4 @@
         - semicircle_cauchy_scalar
         - solve_cauchy_linearized
         - polynomial_density
+        - lambda_eps
