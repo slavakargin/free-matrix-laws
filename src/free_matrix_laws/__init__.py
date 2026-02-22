@@ -1,4 +1,3 @@
-
 # src/free_matrix_laws/__init__.py
 """
 free_matrix_laws: tools for matrix-/operator-valued free probability calculations.
@@ -19,7 +18,8 @@ from .transforms import (
     biased_semicircle_density,
     solve_cauchy_linearized,
     polynomial_semicircle_density, polynomial_density, get_density_C,
-    semicircle_cauchy_scalar
+    semicircle_cauchy_scalar,
+    lambda_eps,
 )
 
 from .ensembles import random_semicircle
@@ -46,9 +46,9 @@ __all__ = [
     "solve_cauchy_linearized", 
     "polynomial_semicircle_density", "polynomial_density", "get_density_C",
     "semicircle_cauchy_scalar",
+    "lambda_eps",
     "cauchy_matrix_semicircle",
     "h_matrix_semicircle",
     "G_from_h",
     "density_scalar_quadrature",
 ]
-

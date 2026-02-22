@@ -4,7 +4,6 @@ Numerical transforms for matrix-/operator-valued free probability.
 from __future__ import annotations
 import numpy as np
 import numpy.linalg as la
-from numpy.polynomial.legendre import leggauss
 from typing import Callable, Optional, Tuple
 
 
@@ -434,6 +433,60 @@ def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.n
     return Lam
 
 
+def lambda_eps(z: complex, n: int, eps: float = 1e-6, block_size: int = 1) -> np.ndarray:
+    r'''
+    Regularized spectral parameter for polynomial linearizations.
+
+    Builds the $n \times n$ diagonal matrix
+    $$
+      \Lambda_\varepsilon(z)
+      =
+      \begin{bmatrix}
+        z\, I_{k} & 0 \\
+        0 & i\varepsilon\, I_{n-k}
+      \end{bmatrix},
+    $$
+    where $k = \texttt{block\_size}$ (default $k=1$, so the top-left entry
+    is $z$ and the remaining diagonal is $i\varepsilon$).
+
+    This matrix appears in the computation of the distribution of a
+    self-adjoint polynomial $p(X_1, \dots, X_s)$ of free semicircular
+    variables via a self-adjoint linearization
+    $$
+      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i.
+    $$
+    The regularized "b-matrix" is then
+    $b_\varepsilon(z) = z\,(\Lambda_\varepsilon(z) - a_0)^{-1}$.
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter (typically $z = x + i\delta$ with $\delta > 0$).
+    n : int
+        Matrix size.
+    eps : float, default ``1e-6``
+        Regularization parameter $\varepsilon > 0$ placed on the lower
+        $(n-k) \times (n-k)$ block.
+    block_size : int, default ``1``
+        Size $k$ of the distinguished top-left block that carries $z$.
+
+    Returns
+    -------
+    (n, n) ndarray, complex
+        The matrix $\Lambda_\varepsilon(z)$.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from free_matrix_laws import lambda_eps
+    >>> lambda_eps(0.5 + 0.01j, 3)
+    array([[0.5+0.01e+00j, 0. +0.e+00j, 0. +0.e+00j],
+           [0. +0.00e+00j, 0. +1.e-06j, 0. +0.e+00j],
+           [0. +0.00e+00j, 0. +0.e+00j, 0. +1.e-06j]])
+    '''
+    return _lambda_eps(z, n, eps_reg=eps, block_size=block_size)
+
+
 def _hfsc_map(
     G: np.ndarray,
     z: complex,
@@ -687,78 +740,3 @@ def polynomial_semicircle_density(
 # Aliases
 polynomial_density = polynomial_semicircle_density
 get_density_C = polynomial_semicircle_density
-
-
-def cauchy_matrix_semicircle_reference(w, b, *, c: float = 1.0, n_quad: int = 256):
-    r"""
-    Reference (brute-force) Cauchy transform for a simple matrix semicircle $b \otimes s$.
-
-    We compute the matrix-valued Cauchy transform
-    $$
-      G(w;b)\;=\;\mathbb{E}\big[(w - bS)^{-1}\big]
-      \;=\;\int_{-2\sqrt{c}}^{2\sqrt{c}} (w - tb)^{-1}\, f_c(t)\,dt,
-    $$
-    where $S$ is a *scalar* semicircle with variance $c>0$ and density
-    $$
-      f_c(t)=\frac{1}{2\pi c}\sqrt{4c-t^2}\,\mathbf 1_{\{|t|\le 2\sqrt c\}}.
-    $$
-
-    For numerical stability, one typically takes $w$ in the operator upper half-plane
-    (e.g. $w=zI$ with $\Im z>0$), so that all resolvents $(w-tb)^{-1}$ exist.
-
-    Implementation detail (why this quadrature):
-    Substitute $t=2\sqrt c\,x$ to get
-    $$
-      G(w;b)=\frac{2}{\pi}\int_{-1}^1 (w-2\sqrt c\,x\,b)^{-1}\sqrt{1-x^2}\,dx.
-    $$
-    The weight $\sqrt{1-x^2}$ suggests Gauss-Chebyshev quadrature of the 2nd kind:
-    $$
-      x_k=\cos\frac{k\pi}{n+1},\qquad
-      \alpha_k=\frac{2}{n+1}\sin^2\frac{k\pi}{n+1},
-    $$
-    giving
-    $$
-      G(w;b)\approx \sum_{k=1}^n \alpha_k\,(w - (2\sqrt c\,x_k)b)^{-1}.
-    $$
-    The weights satisfy $\sum_k \alpha_k = 1$, so for $b=0$ the method returns $w^{-1}$
-    up to floating-point rounding.
-
-    Parameters
-    ----------
-    w : complex scalar or (n,n) ndarray
-        Spectral parameter/matrix.
-    b : (n,n) ndarray
-        Deterministic matrix coefficient.
-    c : float, default 1.0
-        Variance of the semicircle (support is $[-2\sqrt c,2\sqrt c]$).
-    n_quad : int, default 256
-        Number of Chebyshev nodes (larger = more accurate, slower).
-
-    Returns
-    -------
-    (n,n) ndarray
-        Approximation to $G(w;b)$.
-    """
-    if c <= 0:
-        raise ValueError("c must be > 0")
-    b = np.asarray(b, dtype=np.complex128)
-    if b.ndim != 2 or b.shape[0] != b.shape[1]:
-        raise ValueError("b must be a square (n,n) matrix")
-    n = b.shape[0]
-
-    w_arr = np.asarray(w, dtype=np.complex128)
-    w_mat = (w_arr * np.eye(n, dtype=np.complex128)) if w_arr.ndim == 0 else w_arr
-    if w_mat.shape != (n, n):
-        raise ValueError(f"w must be scalar or have shape {(n,n)}, got {w_mat.shape}")
-
-    k = np.arange(1, n_quad + 1, dtype=np.float64)
-    theta = k * np.pi / (n_quad + 1.0)
-    x = np.cos(theta)                          # nodes in [-1,1]
-    alpha = (2.0 / (n_quad + 1.0)) * (np.sin(theta) ** 2)  # weights sum to 1
-    t = 2.0 * np.sqrt(c) * x
-
-    I = np.eye(n, dtype=np.complex128)
-    G = np.zeros((n, n), dtype=np.complex128)
-    for ak, tk in zip(alpha, t):
-        G += ak * la.solve(w_mat - tk * b, I)
-    return G
