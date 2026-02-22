@@ -7,6 +7,8 @@ Cauchy transforms (matrix-valued):
 
 * :func:`cauchy_matrix_semicircle`
   — $G(z)$ for $S = \sum_i A_i \otimes X_i$
+* :func:`cauchy_kronecker_semicircle`
+  — $G_a(w) = E[(w - a \otimes X)^{-1}]$ for a single operator (fast, $O(n^3)$)
 * :func:`cauchy_biased_matrix_semicircle`
   — $G(z)$ for $S = a_0 + \sum_i A_i \otimes X_i$
 * :func:`cauchy_polynomial`
@@ -209,6 +211,116 @@ def cauchy_matrix_semicircle(z: complex, A, G0: np.ndarray | None = None,
             return G_next
         G = G_next
     return G
+
+
+def cauchy_kronecker_semicircle(
+    w: np.ndarray,
+    a: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Cauchy transform of the Kronecker-product semicircle $a \otimes X$.
+
+    Computes
+    $$
+      G_a(w) \;=\; E\!\big[(w - a \otimes X)^{-1}\big],
+    $$
+    where $X$ is a standard semicircular random variable and $a$ is an
+    $n \times n$ deterministic matrix.
+
+    **Method.** Regularize $a$ to $\tilde a = a + i\varepsilon I$ so that it is
+    invertible, then diagonalize $\tilde a^{-1} w = V\,\mathrm{diag}(\mu_1,\dots,\mu_n)\,V^{-1}$.
+    Since $(w - a \otimes x)^{-1} = (\tilde a^{-1} w - I x)^{-1}\,\tilde a^{-1}$, the
+    expectation reduces to
+    $$
+      G_a(w) \;=\; V\,\mathrm{diag}\!\big(G_X(\mu_1),\dots,G_X(\mu_n)\big)\,
+                    V^{-1}\,\tilde a^{-1},
+    $$
+    where $G_X(\mu)$ is the scalar semicircle Cauchy transform.
+
+    This is $O(n^3)$ (one eigendecomposition + two solves), much faster than the
+    fixed-point iteration in :func:`cauchy_matrix_semicircle` for the single-operator case.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix (should have $\Im w \ne 0$ in some sense,
+        e.g. $w = (x + i\varepsilon)\,I$).
+    a : (n, n) ndarray
+        The deterministic matrix in $a \otimes X$.
+    eps : float, default 1e-8
+        Regularization: replaces $a$ by $a + i\varepsilon I$ to handle
+        singular or near-singular $a$.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+        The matrix-valued Cauchy transform $G_a(w)$.
+
+    See Also
+    --------
+    h_kronecker_semicircle :
+        Subordination h-function for the same model.
+    cauchy_matrix_semicircle :
+        General case $\sum_i A_i \otimes X_i$ (fixed-point iteration).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from free_matrix_laws import cauchy_kronecker_semicircle
+    >>> w = (0.5 + 0.01j) * np.eye(2)
+    >>> a = np.array([[1.0, 0.2], [0.2, 0.8]])
+    >>> G = cauchy_kronecker_semicircle(w, a)
+    >>> G.shape
+    (2, 2)
+    '''
+    w = np.asarray(w, dtype=complex)
+    a = np.asarray(a, dtype=complex)
+    if w.ndim != 2 or w.shape[0] != w.shape[1]:
+        raise ValueError(f"w must be square; got {w.shape!r}")
+    if a.shape != w.shape:
+        raise ValueError(f"a must have same shape as w {w.shape!r}; got {a.shape!r}")
+    if eps < 0:
+        raise ValueError("eps must be >= 0")
+
+    n = w.shape[0]
+    a_reg = a + 1j * eps * np.eye(n, dtype=complex)
+    a_reg_inv = la.inv(a_reg)
+
+    mu, V = la.eig(a_reg_inv @ w)
+    G_mu = semicircle_cauchy_scalar(mu)  # vectorized over eigenvalues
+
+    return V @ np.diag(G_mu) @ la.inv(V) @ a_reg_inv
+
+
+def h_kronecker_semicircle(
+    w: np.ndarray,
+    a: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Subordination h-function for the Kronecker-product semicircle $a \otimes X$.
+
+    $$
+      h_a(w) \;=\; G_a(w)^{-1} \;-\; w,
+    $$
+    where $G_a(w)$ is computed by :func:`cauchy_kronecker_semicircle`.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+    '''
+    G = cauchy_kronecker_semicircle(w, a, eps=eps)
+    return la.inv(G) - w
 
 
 def cauchy_biased_matrix_semicircle(

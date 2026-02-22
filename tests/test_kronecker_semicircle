@@ -1,0 +1,131 @@
+"""Tests for cauchy_kronecker_semicircle and h_kronecker_semicircle."""
+import numpy as np
+import numpy.linalg as la
+import pytest
+
+from free_matrix_laws import (
+    cauchy_kronecker_semicircle,
+    h_kronecker_semicircle,
+    semicircle_cauchy_scalar,
+    cauchy_matrix_semicircle,
+)
+
+
+class TestCauchyKroneckerShapes:
+    def test_returns_square_complex(self):
+        n = 3
+        w = (0.5 + 0.02j) * np.eye(n)
+        a = np.diag([1.0, 2.0, 0.5])
+        G = cauchy_kronecker_semicircle(w, a)
+        assert G.shape == (n, n)
+        assert G.dtype == complex
+
+    def test_1x1_matches_scalar(self):
+        z = 0.5 + 0.1j
+        w = np.array([[z]])
+        a = np.array([[1.0]])
+        G = cauchy_kronecker_semicircle(w, a, eps=0)
+        G_scalar = semicircle_cauchy_scalar(z)
+        assert abs(G[0, 0] - G_scalar) < 1e-10
+
+
+class TestCauchyKroneckerValidation:
+    def test_non_square_w_raises(self):
+        with pytest.raises(ValueError):
+            cauchy_kronecker_semicircle(np.ones((2, 3)), np.eye(2))
+
+    def test_shape_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            cauchy_kronecker_semicircle(np.eye(3, dtype=complex), np.eye(2, dtype=complex))
+
+    def test_negative_eps_raises(self):
+        with pytest.raises(ValueError):
+            cauchy_kronecker_semicircle(np.eye(2, dtype=complex), np.eye(2), eps=-1)
+
+
+class TestCauchyKroneckerIdentity:
+    """When a = sigma * I, the Kronecker model reduces to sigma * X."""
+
+    @pytest.mark.parametrize("n", [1, 2, 4])
+    def test_identity_a_diagonal_is_scalar_cauchy(self, n):
+        z = 0.3 + 0.05j
+        w = z * np.eye(n)
+        a = np.eye(n)
+        G = cauchy_kronecker_semicircle(w, a, eps=0)
+        G_expected = semicircle_cauchy_scalar(z)
+        # Diagonal should all be G_expected, off-diag ~ 0
+        for i in range(n):
+            assert abs(G[i, i] - G_expected) < 1e-8
+            for j in range(n):
+                if i != j:
+                    assert abs(G[i, j]) < 1e-10
+
+    def test_scaled_identity(self):
+        """a = sigma*I should give G_X(z/sigma)/sigma on diagonal."""
+        n = 3
+        sigma = 2.0
+        z = 1.0 + 0.1j
+        w = z * np.eye(n)
+        a = sigma * np.eye(n)
+        G = cauchy_kronecker_semicircle(w, a, eps=0)
+        # E[(zI - sigma*X)^{-1}] = (1/sigma) * G_X(z/sigma) * I
+        G_expected = semicircle_cauchy_scalar(z / sigma) / sigma
+        assert np.allclose(G, G_expected * np.eye(n), atol=1e-8)
+
+
+class TestCrossCheckWithFixedPoint:
+    r"""Compare cauchy_kronecker_semicircle against cauchy_matrix_semicircle.
+
+    For a single *Hermitian* operator $a$, both compute the same object:
+    $E[(zI - a \otimes X)^{-1}]$, since $\eta(G) = a G a^* = a G a$.
+
+    For non-Hermitian $a$ they differ because the general solver uses
+    $\eta(G) = a G a^*$ (Kraus form) while the Kronecker solver
+    diagonalizes $a^{-1}w$ directly.
+    """
+
+    @pytest.mark.parametrize("n", [2, 3, 4])
+    def test_matches_general_solver_hermitian_a(self, n):
+        rng = np.random.default_rng(42)
+        a_raw = rng.standard_normal((n, n))
+        a = (a_raw + a_raw.T) / 2  # symmetric
+        z = 0.5 + 0.3j
+        w = z * np.eye(n, dtype=complex)
+
+        G_kron = cauchy_kronecker_semicircle(w, a, eps=1e-10)
+        G_fp = cauchy_matrix_semicircle(z, [a], tol=1e-12, maxiter=2000)
+
+        assert np.allclose(G_kron, G_fp, atol=1e-6), (
+            f"max diff: {np.max(np.abs(G_kron - G_fp)):.2e}"
+        )
+
+
+class TestHKronecker:
+    def test_h_shape(self):
+        n = 3
+        w = (0.5 + 0.02j) * np.eye(n)
+        a = np.diag([1.0, 2.0, 0.5])
+        h = h_kronecker_semicircle(w, a)
+        assert h.shape == (n, n)
+
+    def test_roundtrip_G_from_h(self):
+        """G = (h + w)^{-1} should recover cauchy_kronecker_semicircle."""
+        n = 2
+        w = (0.8 + 0.05j) * np.eye(n)
+        a = np.array([[1.0, 0.3], [0.3, 0.7]])
+        G = cauchy_kronecker_semicircle(w, a)
+        h = h_kronecker_semicircle(w, a)
+        G_recovered = la.inv(h + w)
+        assert np.allclose(G, G_recovered, atol=1e-10)
+
+
+class TestSingularA:
+    def test_singular_a_with_regularization(self):
+        """Singular a should work with eps > 0."""
+        n = 3
+        a = np.zeros((n, n))
+        a[0, 0] = 1.0  # rank-1
+        w = (0.5 + 0.05j) * np.eye(n)
+        G = cauchy_kronecker_semicircle(w, a, eps=1e-6)
+        assert G.shape == (n, n)
+        assert np.all(np.isfinite(G))
