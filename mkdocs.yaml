@@ -32,6 +32,7 @@ nav:
     - Polynomial semicircle (linearization): howto/polynomial_semicircle.md
     - CP Sinkhorn (symmetric OSI): howto/cp_sinkhorn.md
     - Quadrature-based Cauchy transform: howto/quadrature.md
+    - Fixed-point iterations (internals): howto/iterations.md
 markdown_extensions:
   - admonition
   - fenced_code             

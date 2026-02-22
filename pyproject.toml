@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "free-matrix-laws"
-version = "0.0.1"
+version = "0.1.0"
 description = "Calculations for matrix-/operator-valued free probability."
 authors = [{name = "V. Kargin"}]
 readme = "README.md"

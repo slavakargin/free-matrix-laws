@@ -7,8 +7,8 @@ import numpy.linalg as la
 import pytest
 
 from free_matrix_laws.quadrature import (
-    cauchy_matrix_semicircle,
-    h_matrix_semicircle,
+    cauchy_matrix_semicircle_bruteforce,
+    h_matrix_semicircle_bruteforce,
     G_from_h,
     density_scalar_quadrature,
 )
@@ -28,20 +28,20 @@ class TestCauchyMatrixSemicircleShapes:
         n = 3
         b = np.eye(n)
         w = (0.5 + 0.1j) * np.eye(n)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         assert G.shape == (n, n)
         assert np.iscomplexobj(G)
 
     def test_2x2(self):
         b = np.array([[1.0, 0.0], [0.0, 0.5]])
         w = (0.5 + 0.1j) * np.eye(2)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         assert G.shape == (2, 2)
 
     def test_1x1(self):
         b = np.array([[2.0]])
         w = np.array([[0.3 + 0.2j]])
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         assert G.shape == (1, 1)
 
 
@@ -50,23 +50,23 @@ class TestCauchyMatrixSemicircleShapes:
 class TestCauchyMatrixSemicircleValidation:
     def test_non_square_b_raises(self):
         with pytest.raises(ValueError, match="square"):
-            cauchy_matrix_semicircle(
+            cauchy_matrix_semicircle_bruteforce(
                 np.eye(2, dtype=complex), np.ones((2, 3)), eps=1e-3
             )
 
     def test_mismatched_shapes_raises(self):
         with pytest.raises(ValueError, match="shape"):
-            cauchy_matrix_semicircle(
+            cauchy_matrix_semicircle_bruteforce(
                 np.eye(2, dtype=complex), np.eye(3), eps=1e-3
             )
 
     def test_eps_nonpositive_raises(self):
         with pytest.raises(ValueError, match="eps"):
-            cauchy_matrix_semicircle(np.eye(2, dtype=complex), np.eye(2), eps=0)
+            cauchy_matrix_semicircle_bruteforce(np.eye(2, dtype=complex), np.eye(2), eps=0)
 
     def test_bad_integration_limits_raises(self):
         with pytest.raises(ValueError, match="x_min"):
-            cauchy_matrix_semicircle(
+            cauchy_matrix_semicircle_bruteforce(
                 np.eye(2, dtype=complex), np.eye(2), eps=1e-3, x_min=5, x_max=2
             )
 
@@ -81,7 +81,7 @@ class TestIdentityB:
         z = 0.5 + 0.1j
         w = z * np.eye(n, dtype=complex)
         b = np.eye(n, dtype=float)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         g_scalar = _scalar_eye_G(z)
         # diagonal entries should match the scalar Cauchy transform
         for k in range(n):
@@ -94,7 +94,7 @@ class TestIdentityB:
         z = 0.5 + 0.1j
         w = z * np.eye(n, dtype=complex)
         b = np.eye(n, dtype=float)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         for i in range(n):
             for j in range(n):
                 if i != j:
@@ -110,7 +110,7 @@ class TestHMatrixSemicircle:
         n = 2
         b = np.eye(n)
         w = (0.5 + 0.1j) * np.eye(n)
-        h = h_matrix_semicircle(w, b, eps=1e-3)
+        h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         assert h.shape == (n, n)
         assert np.iscomplexobj(h)
 
@@ -121,7 +121,7 @@ class TestHMatrixSemicircle:
         n = 2
         w = z * np.eye(n, dtype=complex)
         b = np.eye(n, dtype=float)
-        h = h_matrix_semicircle(w, b, eps=1e-3)
+        h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         g_sc = _scalar_eye_G(z)
         h_scalar = 1.0 / g_sc - z
         for k in range(n):
@@ -131,15 +131,15 @@ class TestHMatrixSemicircle:
 # ── G_from_h (inverse of h) tests ────────────────────────────────────────
 
 class TestGFromH:
-    """G_from_h should invert h_matrix_semicircle exactly."""
+    """G_from_h should invert h_matrix_semicircle_bruteforce exactly."""
 
     def test_roundtrip_identity_b(self):
         """G -> h -> G roundtrip for b = I."""
         n = 2
         b = np.eye(n)
         w = (0.5 + 0.1j) * np.eye(n, dtype=complex)
-        G_direct = cauchy_matrix_semicircle(w, b, eps=1e-3)
-        h = h_matrix_semicircle(w, b, eps=1e-3)
+        G_direct = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
+        h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         G_recovered = G_from_h(h, w)
         assert np.allclose(G_direct, G_recovered, atol=1e-12)
 
@@ -147,8 +147,8 @@ class TestGFromH:
         """G -> h -> G roundtrip for a non-trivial b."""
         b = np.array([[1.0, 0.3], [0.3, 0.7]])
         w = (0.4 + 0.2j) * np.eye(2, dtype=complex)
-        G_direct = cauchy_matrix_semicircle(w, b, eps=1e-3)
-        h = h_matrix_semicircle(w, b, eps=1e-3)
+        G_direct = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
+        h = h_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         G_recovered = G_from_h(h, w)
         assert np.allclose(G_direct, G_recovered, atol=1e-12)
 
@@ -202,7 +202,7 @@ class TestDiagonalB:
         b = np.diag([1.0, 0.5, 2.0])
         n = 3
         w = (0.5 + 0.1j) * np.eye(n, dtype=complex)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         # off-diagonal should be near zero
         off_diag_norm = la.norm(G - np.diag(np.diag(G)))
         assert off_diag_norm < 1e-6
@@ -221,14 +221,14 @@ class TestCrossCheckWithSolver:
         For a single Kraus operator A1 = b, the fixed-point solver's
         density should approximately match the quadrature density.
         """
-        from free_matrix_laws import semicircle_density
+        from free_matrix_laws import matrix_semicircle_density
 
         b = np.array([[1.0, 0.2], [0.2, 0.8]])
         A = [b]  # single Kraus operator
         x_test = 0.5
         eps = 1e-2
 
-        d_solver = semicircle_density(x_test, A, eps=eps, tol=1e-11, maxiter=5000)
+        d_solver = matrix_semicircle_density(x_test, A, eps=eps, tol=1e-11, maxiter=5000)
         d_quad = density_scalar_quadrature(x_test, b, eps=eps)
 
         # These are two independent methods; agreement to ~1e-2 is good
@@ -247,7 +247,7 @@ class TestZeroB:
         n = 2
         b = np.zeros((n, n))
         w = (0.5 + 0.1j) * np.eye(n, dtype=complex)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3)
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3)
         expected = la.inv(w)
         assert la.norm(G - expected) < 1e-3
 
@@ -259,5 +259,5 @@ class TestQuadOpts:
         """Verify quad_opts is forwarded without error."""
         b = np.eye(2)
         w = (0.5 + 0.1j) * np.eye(2, dtype=complex)
-        G = cauchy_matrix_semicircle(w, b, eps=1e-3, quad_opts={"limit": 50})
+        G = cauchy_matrix_semicircle_bruteforce(w, b, eps=1e-3, quad_opts={"limit": 50})
         assert G.shape == (2, 2)

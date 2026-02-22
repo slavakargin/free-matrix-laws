@@ -1,7 +1,41 @@
-"""
+r"""
 Numerical transforms for matrix-/operator-valued free probability.
+
+Primary API (v0.1.0)
+---------------------
+Cauchy transforms (matrix-valued):
+
+* :func:`cauchy_matrix_semicircle`
+  — $G(z)$ for $S = \sum_i A_i \otimes X_i$
+* :func:`cauchy_biased_matrix_semicircle`
+  — $G(z)$ for $S = a_0 + \sum_i A_i \otimes X_i$
+* :func:`cauchy_polynomial`
+  — $G(z)$ for a self-adjoint polynomial $p(X_1,\dots,X_s)$
+  via linearization
+
+Scalar densities:
+
+* :func:`matrix_semicircle_density`
+  — density of $\sum_i A_i \otimes X_i$
+* :func:`biased_matrix_semicircle_density`
+  — density of $a_0 + \sum_i A_i \otimes X_i$
+* :func:`polynomial_density`
+  — density of $p(X_1,\dots,X_s)$
+
+Scalar (classical) helpers:
+
+* :func:`semicircle_density_scalar`
+  — Wigner semicircle density
+* :func:`semicircle_cauchy_scalar`
+  — scalar Cauchy transform of the semicircle law
+
+Utilities:
+
+* :func:`lambda_eps` — regularized spectral parameter $\Lambda_\varepsilon(z)$
 """
 from __future__ import annotations
+
+import warnings
 import numpy as np
 import numpy.linalg as la
 from typing import Callable, Optional, Tuple
@@ -9,28 +43,28 @@ from typing import Callable, Optional, Tuple
 
 from .opvalued import covariance_map as eta  # η(B)=Σ A_i B A_i^*
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Internal iteration maps
+# ═══════════════════════════════════════════════════════════════════════════
+
 def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
     r'''
-    Half-averaged fixed-point step for the operator-valued semicircle Cauchy transform.
+    Half-averaged fixed-point step for the unbiased matrix semicircle.
 
-    We seek $G(z)$ solving Speicher's equation
-    $$
-        z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0,
-    $$
-    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$ is a completely positive (Kraus) map.
-
-    This iteration map applies the *half-averaged* Picard step
+    One step of the iteration
     $$
         T(G)\;=\;\tfrac12\Big( G \;+\; (\,zI - \eta(G)\,)^{-1}\Big),
     $$
-    and is often more stable than the raw resolvent update for $\Im z>0$.
+    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$.
+
+    This is a low-level building block for :func:`cauchy_matrix_semicircle`.
 
     Parameters
     ----------
     G : (n, n) array_like (complex recommended)
         Current iterate for $G(z)$.
     z : complex
-        Spectral parameter with $\Im z>0$ (ensures resolvent well-defined).
+        Spectral parameter with $\Im z>0$.
     A : sequence of (n, n) arrays or stacked array (s, n, n)
         Kraus operators $A_i$ defining $\eta$.
 
@@ -41,22 +75,21 @@ def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
 
     Notes
     -----
-    • Uses the CP form with $A_i^\ast$ so **no** self-adjointness of $A_i$ is required.  
-    • Requires $(zI-\eta(G))$ to be invertible; for $\Im z>0$ this holds in the
+    * Uses the CP form with $A_i^\ast$ so **no** self-adjointness of $A_i$ is required.
+    * Requires $(zI-\eta(G))$ to be invertible; for $\Im z>0$ this holds in the
       standard operator-valued semicircle setup.
 
     References
     ----------
-    • R. Speicher, *Combinatorial theory of the free product with amalgamation
-      and operator-valued free probability theory*, Mem. AMS **132** (627), 1998.  
-    • R. Rashidi Far, T. Oraby, W. Bryc, R. Speicher, *Spectra of large block matrices*, 2006.
+    * R. Speicher, *Combinatorial theory of the free product with amalgamation
+      and operator-valued free probability theory*, Mem. AMS **132** (627), 1998.
+    * R. Rashidi Far, T. Oraby, W. Bryc, R. Speicher, *Spectra of large block matrices*, 2006.
     '''
     G = np.asarray(G)
     if G.ndim != 2 or G.shape[0] != G.shape[1]:
         raise ValueError(f"G must be square (n,n); got {G.shape!r}")
     n = G.shape[0]
 
-    # ensure complex path (so conjugations inside η behave as expected)
     dtype = np.result_type(G.dtype, np.complex64)
     I = np.eye(n, dtype=dtype)
 
@@ -68,219 +101,16 @@ def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
     return 0.5 * (G.astype(dtype, copy=False) + K)
 
 
-def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
-                            tol: float = 1e-10, maxiter: int = 500) -> np.ndarray:
+def _hfsb_map(G: np.ndarray,
+              z: complex,
+              a0: np.ndarray,
+              A,
+              relax: float = 0.5) -> np.ndarray:
     r'''
-    Solve the operator-valued semicircle equation
-    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0, $$
-    by fixed-point iteration using the half-averaged map
-    $$ G \;\mapsto\; \tfrac12\Big[\,G + (\,zI - \eta(G)\,)^{-1}\Big]. $$
+    One step of the Helton--Far--Speicher iteration for the **biased** matrix
+    semicircle.
 
-    This follows the numerical damping suggested by Helton-Rashidi Far–Speicher (IMRN 2007).
-
-    Parameters
-    ----------
-    z : complex
-        Spectral parameter with $\Im z>0$.
-    A : sequence of $(n,n)$ arrays or stacked $(s,n,n)$ array
-        Kraus operators $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
-    G0 : (n,n) array, optional
-        Initial iterate (defaults to $-iI$).
-    tol : float
-        Relative fixed-point tolerance.
-    maxiter : int
-        Maximum iterations.
-
-    Returns
-    -------
-    (n, n) ndarray
-        Approximate solution $G(z)$.
-
-    Notes
-    -----
-    The residual $R=zG-I-\eta(G)G$ should be small at convergence.
-    '''
-    # infer n from A
-    n = (A[0].shape[0] if isinstance(A, (list, tuple)) else A.shape[-1])
-    G = (-1j * np.eye(n)) if G0 is None else np.array(G0, dtype=complex)
-
-    for _ in range(maxiter):
-        G_next = _hfs_map(G, z, A)
-        if la.norm(G_next - G) <= tol * (1 + la.norm(G)):
-            return G_next
-        G = G_next
-    return G
-
-
-#public alias
-solve_G = solve_cauchy_semicircle
-
-##scalar observables
-def semicircle_density(
-    x: float,
-    A,
-    eps: float = 1e-2,
-    G0=None,
-    tol: float = 1e-10,
-    maxiter: int = 10_000,
-    a0=None,
-) -> float:
-    r'''
-    Stieltjes inversion for the **matrix semicircle** (optionally with bias).
-
-    Unbiased case ($a_0$ is `None`): compute $G(z)$ for $z=x+i\varepsilon$ from
-    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \eta(B)=\sum_{i=1}^s A_i B A_i^\ast, $$
-    then return the scalar density
-    $$ f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right). $$
-
-    Biased case ($a_0\neq 0$): compute the Cauchy transform $G_{a_0+X}(z)$ via the
-    biased solver (internally equivalent to the half-averaged Helton–Rashidi
-    Far–Speicher iteration with $b=z(zI-a_0)^{-1}$), and apply the same reduction.
-
-    Parameters
-    ----------
-    x : float
-        Real evaluation point.
-    A : sequence of $(n,n)$ arrays or stacked array $(s,n,n)$
-        Kraus operators $A_i$ (no self-adjointness required).
-    eps : float, default 1e-2
-        Imaginary offset $\varepsilon>0$ used for $z=x+i\varepsilon$.
-    G0 : (n,n) array, optional
-        Initial iterate for $G$ (passed to the solver).
-    tol : float, default 1e-10
-        Relative fixed-point tolerance for the solver.
-    maxiter : int, default 10000
-        Maximum iterations.
-    a0 : (n,n) array or `None`, default `None`
-        Bias matrix. If provided, computes the density for $a_0 + \sum_i A_i \otimes X_i$.
-
-    Returns
-    -------
-    float
-        Approximation to $f(x)$.
-
-    Notes
-    -----
-    This computes $m(z)=\tfrac{1}{n}\mathrm{tr}\,G(z)$ and uses
-    $f(x)=-(1/\pi)\Im m(x+i\varepsilon)$.
-    '''
-    if eps <= 0:
-        raise ValueError("eps must be > 0")
-
-    # Infer n from A (list/tuple or stacked array)
-    if isinstance(A, np.ndarray) and A.ndim == 3:
-        n = A.shape[-1]
-    elif isinstance(A, np.ndarray) and A.ndim == 2:
-        n = A.shape[0]
-        A = A[None, ...]
-    else:
-        A = list(A)
-        n = A[0].shape[0]
-
-    if a0 is not None:
-        a0 = np.asarray(a0)
-        if a0.shape != (n, n):
-            raise ValueError(f"a0 must have shape {(n,n)}, got {a0.shape}")
-
-    z = float(x) + 1j * float(eps)
-
-    if a0 is None:
-        G = solve_cauchy_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
-    else:
-        # default return of solve_cauchy_biased is G (not (G, info))
-        G = solve_cauchy_biased(z, a0, A, G0=G0, tol=tol, maxiter=maxiter)
-
-    m = np.trace(G) / n
-    f = (-1.0 / np.pi) * np.imag(m)
-    return float(f)
-
-#public alias
-get_density = semicircle_density
-
-def biased_semicircle_density(
-    x: float,
-    a0,
-    A,
-    eps: float = 1e-2,
-    G0=None,
-    tol: float = 1e-10,
-    maxiter: int = 10_000,
-) -> float:
-    r'''
-    Convenience alias for the biased case:
-    $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
-    Calls `semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)`.
-    '''
-    return semicircle_density(x, A, eps=eps, G0=G0, tol=tol, maxiter=maxiter, a0=a0)
-
-
-
-def semicircle_density_scalar(x, c: float = 1.0):
-    r'''
-    Classical (scalar) Wigner semicircle density with variance $c>0$.
-
-    Support is $[-2\sqrt{c},\,2\sqrt{c}]$ with
-    $$
-      f(x) \;=\; \frac{1}{2\pi c}\,\sqrt{\,4c - x^2\,}\,\mathbf 1_{\{|x|\le 2\sqrt{c}\}}.
-    $$
-
-    Parameters
-    ----------
-    x : float or array_like
-        Evaluation point(s).
-    c : float, default 1.0
-        Variance parameter ($c>0$).
-
-    Returns
-    -------
-    float or ndarray
-        $f(x)$, vectorized over `x`.
-
-    Notes
-    -----
-    Parameterization by variance $c$ (so radius is $2\sqrt{c}$).
-    '''
-    if c <= 0:
-        raise ValueError("c must be > 0")
-    x_arr = np.asarray(x, dtype=float)
-    inside = 4.0 * c - x_arr**2
-    y = np.where(inside > 0.0, (1.0 / (2.0 * np.pi * c)) * np.sqrt(inside), 0.0)
-    return y if x_arr.ndim else float(y)
-
-def semicircle_cauchy_scalar(z, c: float = 1.0):
-    r"""
-    Scalar Cauchy (Stieltjes) transform of the Wigner semicircle law with variance c>0.
-
-    For c=1 (support [-2,2]):
-        G(z) = (z - sqrt(z^2 - 4))/2
-
-    More generally (support [-2*sqrt(c), 2*sqrt(c)]):
-        G(z) = (z - sqrt(z^2 - 4c)) / (2c)
-
-    The square-root branch is chosen so that Im(z)>0 => Im(G(z))<0.
-    For boundary values on the real line, use z = x + 1j*eps with eps>0.
-    """
-    if c <= 0:
-        raise ValueError("c must be > 0")
-
-    z_arr = np.asarray(z, dtype=np.complex128)
-    disc = np.sqrt(z_arr**2 - 4.0 * c)
-
-    # Enforce Herglotz symmetry: Im(z)>0 -> Im(G)<0 (and vice versa)
-    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
-
-    G = (z_arr - disc) / (2.0 * c)
-    return G if z_arr.ndim else complex(G)
-
-
-def hfsb_map(G: np.ndarray,
-             z: complex,
-             a0: np.ndarray,
-             A,
-             relax: float = 0.5) -> np.ndarray:
-    r'''
-    One step of the Helton–Far–Speicher style averaging for the **biased** operator-valued
-    semicircle. For $S=a_0 + \sum_i A_i \otimes X_i$ with semicircular $X_i$ and covariance
+    For $S=a_0 + \sum_i A_i \otimes X_i$ with semicircular $X_i$ and covariance
     $\eta(B)=\sum_i A_i B A_i^\ast$, the Cauchy transform $G(z)$ solves
     $$
       G \;=\; (z I - a_0 - \eta(G))^{-1}
@@ -312,44 +142,105 @@ def hfsb_map(G: np.ndarray,
     Returns
     -------
     (n,n) ndarray
+
+    Notes
+    -----
+    This is the core iteration step used by :func:`cauchy_biased_matrix_semicircle`.
+    The relaxation parameter controls damping: $\text{relax}=0.5$ corresponds to
+    the half-averaged scheme of Helton--Rashidi Far--Speicher (IMRN 2007).
     '''
     n = G.shape[0]
     I = np.eye(n, dtype=complex)
-    # b = z (z I - a0)^{-1}
     b = z * la.inv(z * I - a0)
-    # Φ(G) = [z I - b η(G)]^{-1} b
     Phi = la.inv(z * I - b @ eta(G, A)) @ b
     return (1.0 - relax) * G + relax * Phi
 
 
-def solve_cauchy_biased(z: complex,
-                        a0: np.ndarray,
-                        A,
-                        G0: np.ndarray | None = None,
-                        tol: float = 1e-12,
-                        maxiter: int = 5000,
-                        relax: float = 0.5,
-                        return_info: bool = False):
+# ═══════════════════════════════════════════════════════════════════════════
+# Cauchy transforms (matrix-valued)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def cauchy_matrix_semicircle(z: complex, A, G0: np.ndarray | None = None,
+                             tol: float = 1e-10, maxiter: int = 500) -> np.ndarray:
     r'''
-    Fixed-point solver for the **biased** operator-valued semicircle:
+    Matrix-valued Cauchy transform of the matrix semicircle $\sum_i A_i \otimes X_i$.
+
+    Solves the operator-valued semicircle equation
+    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0, $$
+    by fixed-point iteration using the half-averaged map
+    $$ G \;\mapsto\; \tfrac12\Big[\,G + (\,zI - \eta(G)\,)^{-1}\Big], $$
+    where $\eta(B)=\sum_{i=1}^s A_i B A_i^\ast$.
+
+    This follows the numerical damping suggested by Helton--Rashidi Far--Speicher (IMRN 2007).
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter with $\Im z>0$.
+    A : sequence of $(n,n)$ arrays or stacked $(s,n,n)$ array
+        Kraus operators $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    G0 : (n,n) array, optional
+        Initial iterate (defaults to $-iI$).
+    tol : float
+        Relative fixed-point tolerance.
+    maxiter : int
+        Maximum iterations.
+
+    Returns
+    -------
+    (n, n) ndarray
+        Approximate solution $G(z)$.
+
+    Notes
+    -----
+    The residual $R=zG-I-\eta(G)G$ should be small at convergence.
+
+    References
+    ----------
+    * J. W. Helton, R. Rashidi Far, R. Speicher, *Operator-valued Semicircular
+      Elements*, IMRN (2007).
+    '''
+    n = (A[0].shape[0] if isinstance(A, (list, tuple)) else A.shape[-1])
+    G = (-1j * np.eye(n)) if G0 is None else np.array(G0, dtype=complex)
+
+    for _ in range(maxiter):
+        G_next = _hfs_map(G, z, A)
+        if la.norm(G_next - G) <= tol * (1 + la.norm(G)):
+            return G_next
+        G = G_next
+    return G
+
+
+def cauchy_biased_matrix_semicircle(
+    z: complex,
+    a0: np.ndarray,
+    A,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-12,
+    maxiter: int = 5000,
+    relax: float = 0.5,
+    return_info: bool = False,
+):
+    r'''
+    Matrix-valued Cauchy transform of the biased matrix semicircle
+    $S = a_0 + \sum_i A_i \otimes X_i$.
+
+    Solves
     $$
       G \;=\; (z I - a_0 - \eta(G))^{-1},
-      \qquad \Im z>0 .
+      \qquad \Im z>0 ,
     $$
-
-    Initial guess chosen so that $\Im G(z)<0$ when $\Im z>0$
-
-    Iteration:
+    via the relaxed iteration
     $$
       G_{k+1} \;=\; (1-\text{relax})\,G_k \;+\; \text{relax}\,[\,z I - b\,\eta(G_k)\,]^{-1} b,
       \quad b=z(z I - a_0)^{-1}.
     $$
 
-    Convergence check uses the equation form
+    Convergence is checked via the residual
     $$
-      R(G):= (z I - a_0)\,G - I - \eta(G)\,G
+      R(G):= (z I - a_0)\,G - I - \eta(G)\,G,
     $$
-    and stops when $\|R(G)\|_{\mathrm{F}} \le \text{tol}$.
+    stopping when $\|R(G)\|_{\mathrm{F}} \le \text{tol}$.
 
     Parameters
     ----------
@@ -379,17 +270,15 @@ def solve_cauchy_biased(z: complex,
     n = a0.shape[0]
     I = np.eye(n, dtype=complex)
     if G0 is None:
-        eps = float(np.imag(z))
-        if eps <= 0:
-            eps = 1e-2
-        #(Herglotz sign: Im G(z) < 0 for Im z > 0)
-        G = -1j * I / eps
+        eps_imag = float(np.imag(z))
+        if eps_imag <= 0:
+            eps_imag = 1e-2
+        G = -1j * I / eps_imag
     else:
         G = G0.astype(complex, copy=True)
 
     for k in range(1, maxiter + 1):
-        G = hfsb_map(G, z, a0, A, relax=relax)
-        # residual: (zI - a0)G - I - eta(G)G
+        G = _hfsb_map(G, z, a0, A, relax=relax)
         r = (z * I - a0) @ G - I - eta(G, A) @ G
         res = la.norm(r, 'fro')
         if res <= tol:
@@ -401,149 +290,7 @@ def solve_cauchy_biased(z: complex,
     return G
 
 
-
-def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.ndarray:
-    r'''
-    Build the regularized linearization parameter
-    $$
-      \Lambda_\varepsilon(z)
-      =
-      \begin{bmatrix}
-        z I_{k} & 0 \\
-        0 & i\varepsilon\, I_{n-k}
-      \end{bmatrix},
-    $$
-    where $k=\text{block\_size}$.
-
-    Notes
-    -----
-    This is the standard regularization used when extracting the $(1,1)$ corner
-    (or more generally the top-left $k\times k$ corner) from the resolvent of
-    a self-adjoint linearization.
-    '''
-    if n <= 0:
-        raise ValueError("n must be positive.")
-    if not (1 <= block_size <= n):
-        raise ValueError(f"block_size must be in {{1,...,n}}; got {block_size}.")
-    if eps_reg <= 0:
-        raise ValueError("eps_reg must be > 0.")
-
-    Lam = (1j * float(eps_reg)) * np.eye(n, dtype=complex)
-    Lam[:block_size, :block_size] = complex(z) * np.eye(block_size, dtype=complex)
-    return Lam
-
-
-def lambda_eps(z: complex, n: int, eps: float = 1e-6, block_size: int = 1) -> np.ndarray:
-    r'''
-    Regularized spectral parameter for polynomial linearizations.
-
-    Builds the $n \times n$ diagonal matrix
-    $$
-      \Lambda_\varepsilon(z)
-      =
-      \begin{bmatrix}
-        z\, I_{k} & 0 \\
-        0 & i\varepsilon\, I_{n-k}
-      \end{bmatrix},
-    $$
-    where $k = \texttt{block\_size}$ (default $k=1$, so the top-left entry
-    is $z$ and the remaining diagonal is $i\varepsilon$).
-
-    This matrix appears in the computation of the distribution of a
-    self-adjoint polynomial $p(X_1, \dots, X_s)$ of free semicircular
-    variables via a self-adjoint linearization
-    $$
-      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i.
-    $$
-    The regularized "b-matrix" is then
-    $b_\varepsilon(z) = z\,(\Lambda_\varepsilon(z) - a_0)^{-1}$.
-
-    Parameters
-    ----------
-    z : complex
-        Spectral parameter (typically $z = x + i\delta$ with $\delta > 0$).
-    n : int
-        Matrix size.
-    eps : float, default ``1e-6``
-        Regularization parameter $\varepsilon > 0$ placed on the lower
-        $(n-k) \times (n-k)$ block.
-    block_size : int, default ``1``
-        Size $k$ of the distinguished top-left block that carries $z$.
-
-    Returns
-    -------
-    (n, n) ndarray, complex
-        The matrix $\Lambda_\varepsilon(z)$.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from free_matrix_laws import lambda_eps
-    >>> lambda_eps(0.5 + 0.01j, 3)
-    array([[0.5+0.01e+00j, 0. +0.e+00j, 0. +0.e+00j],
-           [0. +0.00e+00j, 0. +1.e-06j, 0. +0.e+00j],
-           [0. +0.00e+00j, 0. +0.e+00j, 0. +1.e-06j]])
-    '''
-    return _lambda_eps(z, n, eps_reg=eps, block_size=block_size)
-
-
-def _hfsc_map(
-    G: np.ndarray,
-    z: complex,
-    a0: np.ndarray,
-    A,
-    eps_reg: float,
-    block_size: int = 1,
-) -> np.ndarray:
-    r'''
-    One HFSC half-averaged iteration step for a linearized polynomial problem.
-
-    Given a self-adjoint linearization
-    $$
-      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i
-    $$
-    (with $X_i$ semicircular), define
-    $$
-      b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
-      \qquad
-      \eta(B) := \sum_{i=1}^s A_i\,B\,A_i^\ast.
-    $$
-    The HFSC step is
-    $$
-      G \mapsto \frac12\Big[G + W\Big],
-      \qquad
-      W := \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z).
-    $$
-
-    Notes
-    -----
-    This is a low-level routine. Most users should call
-    `solve_cauchy_linearized` or `polynomial_density`.
-    '''
-    G = np.asarray(G)
-    a0 = np.asarray(a0)
-
-    if G.ndim != 2 or G.shape[0] != G.shape[1]:
-        raise ValueError(f"G must be square; got {G.shape!r}")
-    if a0.shape != G.shape:
-        raise ValueError(f"a0 must have shape {G.shape!r}; got {a0.shape!r}")
-
-    n = G.shape[0]
-    I = np.eye(n, dtype=complex)
-
-    Lam = _lambda_eps(z, n, eps_reg=eps_reg, block_size=block_size)
-
-    # b = z * (Lam - a0)^{-1}
-    b = complex(z) * la.solve(Lam - a0, I)
-
-    # W = (z I - b eta(G))^{-1} b   (use solve instead of inv)
-    M = complex(z) * I - b @ eta(G, A)
-    W = la.solve(M, b)
-
-    return 0.5 * (G + W)
-
-
-def solve_cauchy_linearized(
+def cauchy_polynomial(
     z: complex,
     a0: np.ndarray,
     A,
@@ -556,14 +303,13 @@ def solve_cauchy_linearized(
     return_info: bool = False,
 ):
     r'''
-    Solve for the regularized “quasi-resolvent” fixed point associated to a
-    self-adjoint linearization $L_p$.
+    Cauchy transform of a self-adjoint polynomial $p(X_1,\dots,X_s)$ via linearization.
 
-    We assume a self-adjoint linearization
+    Given a self-adjoint linearization
     $$
       L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i,
     $$
-    with semicircular $X_i$, and we form
+    with semicircular $X_i$, we form
     $$
       b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
       \qquad
@@ -571,14 +317,17 @@ def solve_cauchy_linearized(
     $$
     where
     $$
-    \Lambda_\varepsilon(z)=\operatorname{diag} \big(z I_k,\ i\varepsilon\, I_{n-k}\big), \qquad k=\text{block\_size}.
+    \Lambda_\varepsilon(z)=\operatorname{diag}
+        \big(z I_k,\ i\varepsilon\, I_{n-k}\big),
+        \qquad k=\text{block\_size}.
     $$
 
     The iteration uses the half-averaged update
     $$
-      G_{new} = \frac12\Big[G + \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z)\Big],
+      G_{new} = \frac12\Big[G + \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1}
+                 b_\varepsilon(z)\Big],
     $$
-    and stops when $\|G_{new}-G\|_F \le \text{tol}\,\|G\|_F$ (relative Frobenius criterion).
+    and stops when $\|G_{new}-G\|_F \le \text{tol}\,\|G\|_F$.
 
     Parameters
     ----------
@@ -589,9 +338,9 @@ def solve_cauchy_linearized(
     A : sequence of (n,n) arrays or stacked array (s,n,n)
         Coefficients $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
     eps_reg : float, default 1e-6
-        Regularization parameter in $\Lambda_\varepsilon(z)$ (used on the lower block).
+        Regularization parameter in $\Lambda_\varepsilon(z)$ (lower block).
     block_size : int, default 1
-        Size $k$ of the distinguished top-left block (the one used to recover the scalar Cauchy transform).
+        Size $k$ of the distinguished top-left block.
     G0 : (n,n) array, optional
         Initial iterate. If None, uses $G_0 = (1/z)I$.
     tol : float, default 1e-10
@@ -613,7 +362,8 @@ def solve_cauchy_linearized(
     After computing $G(z,b_\varepsilon(z))$, the scalar Cauchy transform of $p$
     is obtained from the distinguished corner via
     $$
-      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,\big(G(z,b_\varepsilon(z))\big)_{11},
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
+          \big(G(z,b_\varepsilon(z))\big)_{11},
     $$
     with $k=\text{block\_size}$ and $(\cdot)_{11}$ the top-left $k\times k$ block.
     '''
@@ -639,7 +389,6 @@ def solve_cauchy_linearized(
         if diff <= tol * denom:
             G = G1
             break
-
         G = G1
 
     if return_info:
@@ -647,7 +396,106 @@ def solve_cauchy_linearized(
     return G
 
 
-def polynomial_semicircle_density(
+# ═══════════════════════════════════════════════════════════════════════════
+# Scalar density functions
+# ═══════════════════════════════════════════════════════════════════════════
+
+def matrix_semicircle_density(
+    x: float,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    a0=None,
+) -> float:
+    r'''
+    Scalar density of the matrix semicircle $\sum_i A_i \otimes X_i$
+    (optionally with bias $a_0$).
+
+    Unbiased case ($a_0$ is ``None``): compute $G(z)$ for $z=x+i\varepsilon$ from
+    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \eta(B)=\sum_{i=1}^s A_i B A_i^\ast, $$
+    then return the scalar density
+    $$ f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
+       \mathrm{tr}\,G(x+i\varepsilon)\right). $$
+
+    Biased case ($a_0 \ne 0$): compute $G_{a_0+X}(z)$ via
+    :func:`cauchy_biased_matrix_semicircle` and apply the same inversion.
+
+    Parameters
+    ----------
+    x : float
+        Real evaluation point.
+    A : sequence of $(n,n)$ arrays or stacked array $(s,n,n)$
+        Kraus operators $A_i$.
+    eps : float, default 1e-2
+        Imaginary offset $\varepsilon>0$ for $z=x+i\varepsilon$.
+    G0 : (n,n) array, optional
+        Initial iterate (passed to the solver).
+    tol : float, default 1e-10
+        Relative fixed-point tolerance.
+    maxiter : int, default 10000
+        Maximum iterations.
+    a0 : (n,n) array or ``None``
+        Bias matrix. If provided, computes density for $a_0 + \sum_i A_i \otimes X_i$.
+
+    Returns
+    -------
+    float
+        Approximation to $f(x)$.
+    '''
+    if eps <= 0:
+        raise ValueError("eps must be > 0")
+
+    if isinstance(A, np.ndarray) and A.ndim == 3:
+        n = A.shape[-1]
+    elif isinstance(A, np.ndarray) and A.ndim == 2:
+        n = A.shape[0]
+        A = A[None, ...]
+    else:
+        A = list(A)
+        n = A[0].shape[0]
+
+    if a0 is not None:
+        a0 = np.asarray(a0)
+        if a0.shape != (n, n):
+            raise ValueError(f"a0 must have shape {(n,n)}, got {a0.shape}")
+
+    z = float(x) + 1j * float(eps)
+
+    if a0 is None:
+        G = cauchy_matrix_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
+    else:
+        G = cauchy_biased_matrix_semicircle(z, a0, A, G0=G0, tol=tol, maxiter=maxiter)
+
+    m = np.trace(G) / n
+    f = (-1.0 / np.pi) * np.imag(m)
+    return float(f)
+
+
+def biased_matrix_semicircle_density(
+    x: float,
+    a0,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+) -> float:
+    r'''
+    Scalar density of the biased matrix semicircle
+    $S = a_0 + \sum_i A_i \otimes X_i$.
+
+    Convenience wrapper:
+    $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
+       \mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
+
+    Calls ``matrix_semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)``.
+    '''
+    return matrix_semicircle_density(x, A, eps=eps, G0=G0, tol=tol, maxiter=maxiter, a0=a0)
+
+
+def polynomial_density(
     x: float,
     a0: np.ndarray,
     A,
@@ -661,15 +509,16 @@ def polynomial_semicircle_density(
     return_info: bool = False,
 ) -> float:
     r'''
-    Stieltjes inversion for a self-adjoint polynomial $p$ via a self-adjoint linearization.
+    Scalar density of a self-adjoint polynomial $p(X_1,\dots,X_s)$ of free
+    semicircular variables, via self-adjoint linearization.
 
-    We evaluate at $z=x+i\,\varepsilon$ and compute the regularized fixed point
-    $G(z,b_\varepsilon(z))$ associated to a self-adjoint linearization
-    $L_p=a_0+\sum_i A_i\otimes X_i$.
+    Evaluates at $z=x+i\,\varepsilon$ and computes the regularized fixed point
+    $G(z,b_\varepsilon(z))$ via :func:`cauchy_polynomial`.
 
     The scalar Cauchy transform is extracted from the distinguished corner:
     $$
-      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,\big(G(z,b_\varepsilon(z))\big)_{11},
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
+          \big(G(z,b_\varepsilon(z))\big)_{11},
     $$
     and the density is approximated by
     $$
@@ -685,15 +534,15 @@ def polynomial_semicircle_density(
     A : sequence of (n,n) arrays or stacked array (s,n,n)
         Coefficients defining $\eta(B)=\sum_i A_i B A_i^\ast$.
     eps : float, default 1e-2
-        Imaginary offset in $z=x+i\,\varepsilon$ for Stieltjes inversion.
+        Imaginary offset in $z=x+i\,\varepsilon$.
     eps_reg : float, optional
-        Regularization used in $\Lambda_\varepsilon(z)$. If None, uses eps.
+        Regularization in $\Lambda_\varepsilon(z)$. If None, uses eps.
     block_size : int, default 1
         Size $k$ of the distinguished top-left block.
     G0 : (n,n) array, optional
         Warm start for the solver.
     tol : float, default 1e-10
-        Relative tolerance for the fixed point.
+        Relative tolerance.
     maxiter : int, default 10000
         Maximum iterations.
     return_info : bool, default False
@@ -710,15 +559,10 @@ def polynomial_semicircle_density(
     if eps_reg is None:
         eps_reg = float(eps)
 
-    G, info = solve_cauchy_linearized(
-        z,
-        a0,
-        A,
-        eps_reg=eps_reg,
-        block_size=block_size,
-        G0=G0,
-        tol=tol,
-        maxiter=maxiter,
+    G, info = cauchy_polynomial(
+        z, a0, A,
+        eps_reg=eps_reg, block_size=block_size,
+        G0=G0, tol=tol, maxiter=maxiter,
         return_info=True,
     )
 
@@ -737,6 +581,184 @@ def polynomial_semicircle_density(
     return float(f)
 
 
-# Aliases
-polynomial_density = polynomial_semicircle_density
-get_density_C = polynomial_semicircle_density
+# ═══════════════════════════════════════════════════════════════════════════
+# Scalar (classical) helpers
+# ═══════════════════════════════════════════════════════════════════════════
+
+def semicircle_density_scalar(x, c: float = 1.0):
+    r'''
+    Classical (scalar) Wigner semicircle density with variance $c>0$.
+
+    $$
+      f(x) \;=\; \frac{1}{2\pi c}\,\sqrt{\,4c - x^2\,}\,
+      \mathbf 1_{\{|x|\le 2\sqrt{c}\}}.
+    $$
+
+    Parameters
+    ----------
+    x : float or array_like
+    c : float, default 1.0
+        Variance parameter ($c>0$, so radius is $2\sqrt{c}$).
+
+    Returns
+    -------
+    float or ndarray
+    '''
+    if c <= 0:
+        raise ValueError("c must be > 0")
+    x_arr = np.asarray(x, dtype=float)
+    inside = 4.0 * c - x_arr**2
+    y = np.where(inside > 0.0, (1.0 / (2.0 * np.pi * c)) * np.sqrt(inside), 0.0)
+    return y if x_arr.ndim else float(y)
+
+
+def semicircle_cauchy_scalar(z, c: float = 1.0):
+    r"""
+    Scalar Cauchy (Stieltjes) transform of the Wigner semicircle law
+    with variance $c>0$.
+
+    $$G(z) = \frac{z - \sqrt{z^2 - 4c}}{2c}$$
+
+    The square-root branch is chosen so that $\Im z>0 \Rightarrow \Im G(z)<0$.
+    """
+    if c <= 0:
+        raise ValueError("c must be > 0")
+
+    z_arr = np.asarray(z, dtype=np.complex128)
+    disc = np.sqrt(z_arr**2 - 4.0 * c)
+    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
+
+    G = (z_arr - disc) / (2.0 * c)
+    return G if z_arr.ndim else complex(G)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Utilities: Λ_ε(z) and internal linearization step
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.ndarray:
+    r'''Build $\Lambda_\varepsilon(z)$ (internal, see :func:`lambda_eps`).'''
+    if n <= 0:
+        raise ValueError("n must be positive.")
+    if not (1 <= block_size <= n):
+        raise ValueError(f"block_size must be in {{1,...,n}}; got {block_size}.")
+    if eps_reg <= 0:
+        raise ValueError("eps_reg must be > 0.")
+
+    Lam = (1j * float(eps_reg)) * np.eye(n, dtype=complex)
+    Lam[:block_size, :block_size] = complex(z) * np.eye(block_size, dtype=complex)
+    return Lam
+
+
+def lambda_eps(z: complex, n: int, eps: float = 1e-6, block_size: int = 1) -> np.ndarray:
+    r'''
+    Regularized spectral parameter for polynomial linearizations.
+
+    $$
+      \Lambda_\varepsilon(z)
+      =
+      \begin{bmatrix}
+        z\, I_{k} & 0 \\
+        0 & i\varepsilon\, I_{n-k}
+      \end{bmatrix},
+    \qquad k = \texttt{block\_size}.
+    $$
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter.
+    n : int
+        Matrix size.
+    eps : float, default ``1e-6``
+        Regularization $\varepsilon > 0$ on the lower block.
+    block_size : int, default ``1``
+        Size $k$ of the top-left block carrying $z$.
+
+    Returns
+    -------
+    (n, n) ndarray, complex
+    '''
+    return _lambda_eps(z, n, eps_reg=eps, block_size=block_size)
+
+
+def _hfsc_map(
+    G: np.ndarray, z: complex, a0: np.ndarray, A,
+    eps_reg: float, block_size: int = 1,
+) -> np.ndarray:
+    r'''
+    One HFSC half-averaged step for the linearized polynomial problem.
+
+    $$
+      G \mapsto \frac12\Big[G + W\Big],
+      \qquad
+      W := \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z),
+    $$
+    where $b_\varepsilon(z) = z(\Lambda_\varepsilon(z) - a_0)^{-1}$.
+
+    This is a low-level routine used by :func:`cauchy_polynomial`.
+    '''
+    G = np.asarray(G)
+    a0 = np.asarray(a0)
+    if G.ndim != 2 or G.shape[0] != G.shape[1]:
+        raise ValueError(f"G must be square; got {G.shape!r}")
+    if a0.shape != G.shape:
+        raise ValueError(f"a0 must have shape {G.shape!r}; got {a0.shape!r}")
+
+    n = G.shape[0]
+    I = np.eye(n, dtype=complex)
+    Lam = _lambda_eps(z, n, eps_reg=eps_reg, block_size=block_size)
+    b = complex(z) * la.solve(Lam - a0, I)
+    M = complex(z) * I - b @ eta(G, A)
+    W = la.solve(M, b)
+    return 0.5 * (G + W)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Deprecated aliases (v0.0.1 → v0.1.0)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _deprecated_alias(old_name, new_name, new_func):
+    """Create a wrapper that emits a DeprecationWarning then delegates."""
+    def wrapper(*args, **kwargs):
+        warnings.warn(
+            f"'{old_name}' is deprecated since v0.1.0; "
+            f"use '{new_name}' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return new_func(*args, **kwargs)
+    wrapper.__name__ = old_name
+    wrapper.__qualname__ = old_name
+    wrapper.__doc__ = (
+        f".. deprecated:: 0.1.0\n   Use :func:`{new_name}` instead."
+    )
+    return wrapper
+
+
+solve_cauchy_semicircle = _deprecated_alias(
+    "solve_cauchy_semicircle", "cauchy_matrix_semicircle", cauchy_matrix_semicircle)
+
+solve_G = _deprecated_alias(
+    "solve_G", "cauchy_matrix_semicircle", cauchy_matrix_semicircle)
+
+semicircle_density = _deprecated_alias(
+    "semicircle_density", "matrix_semicircle_density", matrix_semicircle_density)
+
+get_density = _deprecated_alias(
+    "get_density", "matrix_semicircle_density", matrix_semicircle_density)
+
+solve_cauchy_biased = _deprecated_alias(
+    "solve_cauchy_biased", "cauchy_biased_matrix_semicircle", cauchy_biased_matrix_semicircle)
+
+biased_semicircle_density = _deprecated_alias(
+    "biased_semicircle_density", "biased_matrix_semicircle_density", biased_matrix_semicircle_density)
+
+solve_cauchy_linearized = _deprecated_alias(
+    "solve_cauchy_linearized", "cauchy_polynomial", cauchy_polynomial)
+
+polynomial_semicircle_density = _deprecated_alias(
+    "polynomial_semicircle_density", "polynomial_density", polynomial_density)
+
+hfsb_map = _deprecated_alias(
+    "hfsb_map", "_hfsb_map (now private)", _hfsb_map)
