@@ -7,8 +7,10 @@ Cauchy transforms (matrix-valued):
 
 * :func:`cauchy_matrix_semicircle`
   — $G(z)$ for $S = \sum_i A_i \otimes X_i$
+* :func:`cauchy_kronecker`
+  — $G_a(w) = E[(w - a \otimes X)^{-1}]$ for any scalar distribution (fast, $O(n^3)$)
 * :func:`cauchy_kronecker_semicircle`
-  — $G_a(w) = E[(w - a \otimes X)^{-1}]$ for a single operator (fast, $O(n^3)$)
+  — specialization to $X$ semicircular
 * :func:`cauchy_biased_matrix_semicircle`
   — $G(z)$ for $S = a_0 + \sum_i A_i \otimes X_i$
 * :func:`cauchy_polynomial`
@@ -213,33 +215,34 @@ def cauchy_matrix_semicircle(z: complex, A, G0: np.ndarray | None = None,
     return G
 
 
-def cauchy_kronecker_semicircle(
+def cauchy_kronecker(
     w: np.ndarray,
     a: np.ndarray,
+    cauchy_scalar: Callable = None,
     eps: float = 1e-8,
 ) -> np.ndarray:
     r'''
-    Cauchy transform of the Kronecker-product semicircle $a \otimes X$.
+    Cauchy transform of a Kronecker-product random variable $a \otimes X$.
 
     Computes
     $$
       G_a(w) \;=\; E\!\big[(w - a \otimes X)^{-1}\big],
     $$
-    where $X$ is a standard semicircular random variable and $a$ is an
-    $n \times n$ deterministic matrix.
+    where $X$ is a scalar random variable with known Cauchy (Stieltjes) transform
+    $G_X(z)$, and $a$ is an $n \times n$ deterministic matrix.
 
     **Method.** Regularize $a$ to $\tilde a = a + i\varepsilon I$ so that it is
-    invertible, then diagonalize $\tilde a^{-1} w = V\,\mathrm{diag}(\mu_1,\dots,\mu_n)\,V^{-1}$.
-    Since $(w - a \otimes x)^{-1} = (\tilde a^{-1} w - I x)^{-1}\,\tilde a^{-1}$, the
-    expectation reduces to
+    invertible, then diagonalize
+    $\tilde a^{-1} w = V\,\mathrm{diag}(\mu_1,\dots,\mu_n)\,V^{-1}$.
+    The expectation reduces to
     $$
       G_a(w) \;=\; V\,\mathrm{diag}\!\big(G_X(\mu_1),\dots,G_X(\mu_n)\big)\,
                     V^{-1}\,\tilde a^{-1},
     $$
-    where $G_X(\mu)$ is the scalar semicircle Cauchy transform.
+    where $G_X$ is the scalar Cauchy transform passed as ``cauchy_scalar``.
 
-    This is $O(n^3)$ (one eigendecomposition + two solves), much faster than the
-    fixed-point iteration in :func:`cauchy_matrix_semicircle` for the single-operator case.
+    This is $O(n^3)$ (one eigendecomposition + two solves) regardless of
+    the underlying distribution of $X$.
 
     Parameters
     ----------
@@ -248,6 +251,10 @@ def cauchy_kronecker_semicircle(
         e.g. $w = (x + i\varepsilon)\,I$).
     a : (n, n) ndarray
         The deterministic matrix in $a \otimes X$.
+    cauchy_scalar : callable, optional
+        Scalar Cauchy transform $G_X(z)$, accepting a complex array and
+        returning a complex array of the same shape.
+        Default: :func:`semicircle_cauchy_scalar` (standard Wigner law).
     eps : float, default 1e-8
         Regularization: replaces $a$ by $a + i\varepsilon I$ to handle
         singular or near-singular $a$.
@@ -259,7 +266,9 @@ def cauchy_kronecker_semicircle(
 
     See Also
     --------
-    h_kronecker_semicircle :
+    cauchy_kronecker_semicircle :
+        Convenience alias with ``cauchy_scalar=semicircle_cauchy_scalar``.
+    h_kronecker :
         Subordination h-function for the same model.
     cauchy_matrix_semicircle :
         General case $\sum_i A_i \otimes X_i$ (fixed-point iteration).
@@ -267,13 +276,26 @@ def cauchy_kronecker_semicircle(
     Examples
     --------
     >>> import numpy as np
-    >>> from free_matrix_laws import cauchy_kronecker_semicircle
+    >>> from free_matrix_laws import cauchy_kronecker, semicircle_cauchy_scalar
     >>> w = (0.5 + 0.01j) * np.eye(2)
     >>> a = np.array([[1.0, 0.2], [0.2, 0.8]])
-    >>> G = cauchy_kronecker_semicircle(w, a)
+    >>> G = cauchy_kronecker(w, a)  # semicircle by default
     >>> G.shape
     (2, 2)
+
+    Use a custom scalar Cauchy transform (e.g. Marchenko–Pastur):
+
+    >>> def cauchy_mp(z, gamma=1.0):
+    ...     # Marchenko-Pastur Cauchy transform
+    ...     disc = np.sqrt((z - (1+np.sqrt(gamma))**2) *
+    ...                    (z - (1-np.sqrt(gamma))**2))
+    ...     disc = np.where(disc.imag * z.imag < 0, -disc, disc)
+    ...     return (z - gamma + 1 - disc) / (2 * gamma * z)
+    >>> G_mp = cauchy_kronecker(w, a, cauchy_scalar=cauchy_mp)
     '''
+    if cauchy_scalar is None:
+        cauchy_scalar = semicircle_cauchy_scalar
+
     w = np.asarray(w, dtype=complex)
     a = np.asarray(a, dtype=complex)
     if w.ndim != 2 or w.shape[0] != w.shape[1]:
@@ -288,23 +310,64 @@ def cauchy_kronecker_semicircle(
     a_reg_inv = la.inv(a_reg)
 
     mu, V = la.eig(a_reg_inv @ w)
-    G_mu = semicircle_cauchy_scalar(mu)  # vectorized over eigenvalues
+    G_mu = cauchy_scalar(mu)  # vectorized over eigenvalues
 
     return V @ np.diag(G_mu) @ la.inv(V) @ a_reg_inv
 
 
-def h_kronecker_semicircle(
+def h_kronecker(
+    w: np.ndarray,
+    a: np.ndarray,
+    cauchy_scalar: Callable = None,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Subordination h-function for a Kronecker-product random variable $a \otimes X$.
+
+    $$
+      h_a(w) \;=\; G_a(w)^{-1} \;-\; w,
+    $$
+    where $G_a(w)$ is computed by :func:`cauchy_kronecker`.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    cauchy_scalar : callable, optional
+        Scalar Cauchy transform $G_X(z)$.
+        Default: :func:`semicircle_cauchy_scalar`.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+
+    See Also
+    --------
+    h_kronecker_semicircle :
+        Convenience alias for the semicircle case.
+    cauchy_kronecker :
+        The underlying Cauchy transform.
+    '''
+    G = cauchy_kronecker(w, a, cauchy_scalar=cauchy_scalar, eps=eps)
+    return la.inv(G) - w
+
+
+def cauchy_kronecker_semicircle(
     w: np.ndarray,
     a: np.ndarray,
     eps: float = 1e-8,
 ) -> np.ndarray:
     r'''
-    Subordination h-function for the Kronecker-product semicircle $a \otimes X$.
+    Cauchy transform of the Kronecker-product semicircle $a \otimes X$.
 
-    $$
-      h_a(w) \;=\; G_a(w)^{-1} \;-\; w,
-    $$
-    where $G_a(w)$ is computed by :func:`cauchy_kronecker_semicircle`.
+    Convenience alias for
+    ``cauchy_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
+
+    See :func:`cauchy_kronecker` for full documentation.
 
     Parameters
     ----------
@@ -319,8 +382,36 @@ def h_kronecker_semicircle(
     -------
     (n, n) ndarray (complex)
     '''
-    G = cauchy_kronecker_semicircle(w, a, eps=eps)
-    return la.inv(G) - w
+    return cauchy_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)
+
+
+def h_kronecker_semicircle(
+    w: np.ndarray,
+    a: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Subordination h-function for the Kronecker-product semicircle $a \otimes X$.
+
+    Convenience alias for
+    ``h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
+
+    See :func:`h_kronecker` for full documentation.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+    '''
+    return h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)
 
 
 def cauchy_biased_matrix_semicircle(

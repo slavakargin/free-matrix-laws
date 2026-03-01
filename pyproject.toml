@@ -13,7 +13,7 @@ dependencies = ["numpy>=1.26,<2.1", "scipy>=1.11"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-
+  
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["free_matrix_laws*"]

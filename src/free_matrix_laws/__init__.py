@@ -17,6 +17,8 @@ from .opvalued import (
 from .transforms import (
     # Cauchy transforms (matrix-valued)
     cauchy_matrix_semicircle,
+    cauchy_kronecker,
+    h_kronecker,
     cauchy_kronecker_semicircle,
     h_kronecker_semicircle,
     cauchy_biased_matrix_semicircle,
@@ -63,6 +65,8 @@ __all__ = [
     "ds_distance",
     # transforms — primary
     "cauchy_matrix_semicircle",
+    "cauchy_kronecker",
+    "h_kronecker",
     "cauchy_kronecker_semicircle",
     "h_kronecker_semicircle",
     "cauchy_biased_matrix_semicircle",
