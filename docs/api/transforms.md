@@ -14,6 +14,8 @@
         - polynomial_density
         - semicircle_density_scalar
         - semicircle_cauchy_scalar
+        - cauchy_kronecker
+        - h_kronecker
         - cauchy_kronecker_semicircle
         - h_kronecker_semicircle
         - lambda_eps
