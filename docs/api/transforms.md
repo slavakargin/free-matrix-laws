@@ -18,4 +18,5 @@
         - h_kronecker
         - cauchy_kronecker_semicircle
         - h_kronecker_semicircle
+        - subordination_kronecker
         - lambda_eps
