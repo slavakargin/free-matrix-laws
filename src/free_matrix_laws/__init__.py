@@ -31,6 +31,7 @@ from .transforms import (
     semicircle_density_scalar,
     semicircle_cauchy_scalar,
     # Utilities
+    subordination_kronecker,
     lambda_eps,
 )
 
@@ -76,6 +77,7 @@ __all__ = [
     "polynomial_density",
     "semicircle_density_scalar",
     "semicircle_cauchy_scalar",
+    "subordination_kronecker",
     "lambda_eps",
     # ensembles
     "random_semicircle",

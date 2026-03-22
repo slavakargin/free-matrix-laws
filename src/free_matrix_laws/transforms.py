@@ -35,6 +35,8 @@ Scalar (classical) helpers:
 
 Utilities:
 
+* :func:`subordination_kronecker`
+  — subordination function $\omega_1(b)$ for free additive convolution
 * :func:`lambda_eps` — regularized spectral parameter $\Lambda_\varepsilon(z)$
 """
 from __future__ import annotations
@@ -412,6 +414,137 @@ def h_kronecker_semicircle(
     (n, n) ndarray (complex)
     '''
     return h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)
+
+
+def subordination_kronecker(
+    b: np.ndarray,
+    a1: np.ndarray,
+    a2: np.ndarray,
+    cauchy_scalar_x: Callable = None,
+    cauchy_scalar_y: Callable = None,
+    eps: float = 1e-4,
+    tol: float = 1e-12,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+) -> np.ndarray:
+    r'''
+    Subordination function $\omega_1(b)$ for the free additive convolution
+    of two Kronecker-product random variables $a_1 \otimes X$ and $a_2 \otimes Y$.
+
+    Computes the fixed point of the map
+    $$
+      w \;\mapsto\; h_Y\!\big(h_X(w) + b\big) + b,
+    $$
+    where $h_X(w) = G_{a_1 \otimes X}(w)^{-1} - w$ and
+    $h_Y(w) = G_{a_2 \otimes Y}(w)^{-1} - w$ are the subordination h-functions
+    computed via :func:`h_kronecker`.
+
+    After convergence, the Cauchy transform of the sum $p(X,Y)$ (as encoded
+    by the linearization $b = \Lambda_\varepsilon(z) - a_0$) can be recovered as
+    $$
+      G_{X+Y}(b) \;=\; G_{a_1 \otimes X}\!\big(\omega_1(b)\big).
+    $$
+
+    Parameters
+    ----------
+    b : (n, n) ndarray
+        The "driving matrix," typically $b = \Lambda_\varepsilon(z) - a_0$
+        for a linearization $L_p = a_0 + a_1 \otimes X + a_2 \otimes Y$.
+    a1 : (n, n) ndarray
+        Deterministic matrix for the first variable ($a_1 \otimes X$).
+    a2 : (n, n) ndarray
+        Deterministic matrix for the second variable ($a_2 \otimes Y$).
+    cauchy_scalar_x : callable, optional
+        Scalar Cauchy transform $G_X(z)$ for the first variable.
+        Default: :func:`semicircle_cauchy_scalar`.
+    cauchy_scalar_y : callable, optional
+        Scalar Cauchy transform $G_Y(z)$ for the second variable.
+        Default: :func:`semicircle_cauchy_scalar`.
+    eps : float, default 1e-4
+        Regularization for the Kronecker h-functions. Larger than the
+        default in :func:`cauchy_kronecker` because linearization matrices
+        $a_1, a_2$ are typically rank-deficient.
+    tol : float, default 1e-12
+        Convergence tolerance (Frobenius norm of $w_{k+1} - w_k$).
+    maxiter : int, default 10000
+        Maximum iterations.
+    return_info : bool, default False
+        If True, also return a dict with diagnostics.
+
+    Returns
+    -------
+    omega : (n, n) ndarray (complex)
+        The subordination function $\omega_1(b)$.
+    info : dict (only if return_info=True)
+        Keys: ``iters``, ``last_diff``.
+
+    See Also
+    --------
+    h_kronecker : The h-function used at each step.
+    cauchy_kronecker : To recover $G_{X+Y}(b)$ from $\omega_1(b)$.
+
+    Examples
+    --------
+    Anticommutator of two free semicircles via subordination:
+
+    >>> import numpy as np
+    >>> from free_matrix_laws import (
+    ...     subordination_kronecker, cauchy_kronecker_semicircle, lambda_eps
+    ... )
+    >>> A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
+    >>> A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+    >>> A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
+    >>> z = 0.5 + 0.01j
+    >>> b = lambda_eps(z, 3) - A0
+    >>> omega = subordination_kronecker(b, A1, A2)
+    >>> G = cauchy_kronecker_semicircle(omega, A1)
+    >>> density = -G[0, 0].imag / np.pi
+
+    Anticommutator with different distributions (e.g. free Poisson):
+
+    >>> def cauchy_poisson(z, lam=4.0):
+    ...     a = (1 - np.sqrt(lam))**2
+    ...     b = (1 + np.sqrt(lam))**2
+    ...     disc = np.sqrt((z - a) * (z - b))
+    ...     disc = np.where(disc.imag * z.imag < 0, -disc, disc)
+    ...     return (1 + z - lam - disc) / (2 * z)
+    >>> omega = subordination_kronecker(b, A1, A2,
+    ...     cauchy_scalar_x=cauchy_poisson, cauchy_scalar_y=cauchy_poisson)
+
+    References
+    ----------
+    * S. Belinschi, T. Mai, R. Speicher, *Analytic subordination theory of
+      operator-valued free additive convolution and the solution of a general
+      random matrix problem*, J. reine angew. Math. **732** (2017), 21–53.
+    '''
+    if cauchy_scalar_x is None:
+        cauchy_scalar_x = semicircle_cauchy_scalar
+    if cauchy_scalar_y is None:
+        cauchy_scalar_y = semicircle_cauchy_scalar
+
+    b = np.asarray(b, dtype=complex)
+    a1 = np.asarray(a1, dtype=complex)
+    a2 = np.asarray(a2, dtype=complex)
+    n = b.shape[0]
+
+    W = 1j * np.eye(n, dtype=complex)  # initialization
+
+    last_diff = np.inf
+    for k in range(1, maxiter + 1):
+        W1 = h_kronecker(W, a1, cauchy_scalar=cauchy_scalar_x, eps=eps) + b
+        W_new = h_kronecker(W1, a2, cauchy_scalar=cauchy_scalar_y, eps=eps) + b
+
+        diff = la.norm(W_new - W, 'fro')
+        last_diff = diff
+
+        if diff <= tol:
+            W = W_new
+            break
+        W = W_new
+
+    if return_info:
+        return W, {"iters": k, "last_diff": float(last_diff)}
+    return W
 
 
 def cauchy_biased_matrix_semicircle(
