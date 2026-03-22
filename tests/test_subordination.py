@@ -38,7 +38,7 @@ class TestSubordinationKroneckerBasic:
         omega, info = subordination_kronecker(b, A1, A2, return_info=True)
         assert "iters" in info
         assert "last_diff" in info
-        assert info["last_diff"] < 1e-6
+        assert info["last_diff"] < 1e-7
 
     def test_fixed_point_property(self):
         r"""omega should satisfy omega = h_Y(h_X(omega) + b) + b

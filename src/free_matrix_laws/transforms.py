@@ -423,7 +423,7 @@ def subordination_kronecker(
     cauchy_scalar_x: Callable = None,
     cauchy_scalar_y: Callable = None,
     eps: float = 1e-4,
-    tol: float = 1e-12,
+    tol: float = 1e-8,
     maxiter: int = 10_000,
     return_info: bool = False,
 ) -> np.ndarray:
@@ -464,8 +464,10 @@ def subordination_kronecker(
         Regularization for the Kronecker h-functions. Larger than the
         default in :func:`cauchy_kronecker` because linearization matrices
         $a_1, a_2$ are typically rank-deficient.
-    tol : float, default 1e-12
+    tol : float, default 1e-8
         Convergence tolerance (Frobenius norm of $w_{k+1} - w_k$).
+        Note: with ``eps=1e-4``, achievable accuracy is roughly $O(\varepsilon)$,
+        so tighter tolerances may not be reached.
     maxiter : int, default 10000
         Maximum iterations.
     return_info : bool, default False
