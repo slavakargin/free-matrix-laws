@@ -123,12 +123,14 @@ def solve_hms(
 
 def hms_sweep(
     A,
-    u_max: float = 0.5,
-    u_min: float = 1e-8,
+    u_max: float | None = None,
+    u_min: float = 1e-6,
     n_points: int = 300,
-    tol: float = 1e-12,
-    maxiter: int = 500,
+    tol: float = 1e-13,
+    maxiter: int = 20000,
     convergence_threshold: float = 1e-8,
+    method: str = "hfs",
+    progress: bool | int = False,
 ) -> dict:
     r"""
     Sweep the HMS equation from large to small $u$ with warm-starting.
@@ -137,16 +139,31 @@ def hms_sweep(
     ----------
     A : list of (n, n) arrays or (s, n, n) array
         Kraus operators.
-    u_max, u_min : float
-        Bounds for the geometric grid of $u$ values.
+    u_max : float or None
+        Upper bound for $u$. If None, automatically set to
+        $3\,\|\eta(I)\|_{\mathrm{op}}$ so the solver starts in the
+        easy asymptotic regime $W \approx I/u$.
+    u_min : float
+        Lower bound for $u$.
     n_points : int
         Number of grid points.
     tol : float
-        Newton solver tolerance.
+        Solver tolerance.
     maxiter : int
-        Max Newton iterations per $u$.
+        Max iterations per $u$.
     convergence_threshold : float
         Points with residual above this are flagged as not converged.
+    method : ``"hfs"`` or ``"newton"``
+        ``"hfs"`` (default): Helton--Far--Speicher contraction via
+        :func:`~free_matrix_laws.cauchy_matrix_semicircle`.
+        Robust and guaranteed to converge, but slower per step.
+        ``"newton"``: Newton's method via :func:`solve_hms`.
+        Faster per step but may stall near singularities for
+        large-norm $\eta$.
+    progress : bool or int
+        If True, print a status line approximately every 10% of the
+        sweep.  If a positive integer, print every that many steps.
+        If False (default), silent.
 
     Returns
     -------
@@ -155,11 +172,18 @@ def hms_sweep(
         ``tr_W`` : (m,) array of $\operatorname{tr}(W(u))$ (normalized trace).
         ``eigs`` : (m, n) array of eigenvalues of $\Re\,W$ (descending order).
         ``det_W`` : (m,) array of $\det(\Re\,W(u))$.
-        ``residuals`` : (m,) array of Newton residuals.
+        ``residuals`` : (m,) array of solver residuals.
         ``converged`` : (m,) bool array.
     """
+    from .transforms import cauchy_matrix_semicircle as _hfs_solve
+
     n = A[0].shape[0] if isinstance(A, (list, tuple)) else A.shape[-1]
-    eta_mat = _build_eta_matrix(A, n)
+    I_n = np.eye(n, dtype=complex)
+
+    # Auto-detect u_max from spectral radius of eta(I)
+    if u_max is None:
+        etaI = _eta(np.eye(n), A)
+        u_max = max(3.0 * la.norm(etaI, 2), 10.0)
 
     u_vals = np.logspace(np.log10(u_max), np.log10(u_min), n_points)
 
@@ -168,18 +192,72 @@ def hms_sweep(
     det_W = np.zeros(n_points)
     residuals = np.zeros(n_points)
 
-    W_prev = None
-    for k, u in enumerate(u_vals):
-        W, iters, res = solve_hms(u, A, W0=W_prev, tol=tol,
-                                  maxiter=maxiter, _eta_mat=eta_mat)
-        W_prev = W.copy()
-        residuals[k] = res
+    # Progress reporting setup
+    if progress is True:
+        _prog_every = max(n_points // 10, 1)
+    elif progress:
+        _prog_every = int(progress)
+    else:
+        _prog_every = 0
 
-        ReW = 0.5 * (W + W.conj().T)
-        ev = np.sort(la.eigvalsh(ReW))[::-1]
-        eigs[k] = ev
-        tr_W[k] = np.trace(ReW).real / n
-        det_W[k] = la.det(ReW).real
+    if _prog_every:
+        print(f"  {'step':>5s}/{n_points}  {'u':>10s}  {'tr(W)':>12s}"
+              f"  {'residual':>10s}  {'slope':>8s}")
+        print("  " + "-" * 58)
+
+    def _report(k):
+        """Print progress line with running slope estimate."""
+        if not _prog_every:
+            return
+        if k > 0 and k < n_points - 1 and (k + 1) % _prog_every != 0:
+            return
+        # Running slope from converged points so far
+        slope_str = "..."
+        good = residuals[:k+1] < convergence_threshold
+        if np.sum(good) >= 5:
+            log_u = np.log(u_vals[:k+1][good])
+            log_tr = np.log(np.abs(tr_W[:k+1][good]))
+            if np.ptp(log_u) > 0.5:  # need some dynamic range
+                slope, _ = np.polyfit(log_u, log_tr, 1)
+                slope_str = f"{slope:+.4f}"
+        conv_char = "✓" if residuals[k] < convergence_threshold else "✗"
+        print(f"  {k+1:5d}/{n_points}  {u_vals[k]:10.2e}"
+              f"  {tr_W[k]:12.6f}  {residuals[k]:10.2e}"
+              f"  {slope_str:>8s}  {conv_char}")
+
+    if method == "newton":
+        eta_mat = _build_eta_matrix(A, n)
+        W_prev = None
+        for k, u in enumerate(u_vals):
+            W, iters, res = solve_hms(u, A, W0=W_prev, tol=tol,
+                                      maxiter=maxiter, _eta_mat=eta_mat)
+            W_prev = W.copy()
+            residuals[k] = res
+            ReW = 0.5 * (W + W.conj().T)
+            ev = np.sort(la.eigvalsh(ReW))[::-1]
+            eigs[k] = ev
+            tr_W[k] = np.trace(ReW).real / n
+            det_W[k] = la.det(ReW).real
+            _report(k)
+    else:
+        # HFS contraction: W(u) = i G(iu)
+        G_prev = None
+        for k, u in enumerate(u_vals):
+            z = 1j * u
+            G = _hfs_solve(z, A, G0=G_prev, tol=tol, maxiter=maxiter)
+            G_prev = G
+            W = 1j * G
+            etaW = _eta(W, A)
+            residuals[k] = la.norm(etaW @ W + u * W - I_n)
+            ReW = 0.5 * (W + W.conj().T)
+            ev = np.sort(la.eigvalsh(ReW))[::-1]
+            eigs[k] = ev
+            tr_W[k] = np.trace(ReW).real / n
+            det_W[k] = la.det(ReW).real
+            _report(k)
+
+    if _prog_every:
+        print()
 
     return dict(
         u=u_vals,
@@ -262,11 +340,13 @@ def puiseux_exponent(
 
 def singularity_report(
     A,
-    u_max: float = 0.5,
-    u_min: float = 1e-8,
+    u_max: float | None = None,
+    u_min: float = 1e-6,
     n_points: int = 300,
-    tol: float = 1e-12,
+    tol: float = 1e-13,
+    method: str = "hfs",
     verbose: bool = True,
+    progress: bool | int = False,
 ) -> dict:
     r"""
     Full singularity analysis of the HMS function $W(u)$ at $u = 0$.
@@ -279,14 +359,24 @@ def singularity_report(
     ----------
     A : list of (n, n) arrays or (s, n, n) array
         Kraus operators.
-    u_max, u_min : float
-        Range for the $u$-sweep.
+    u_max : float or None
+        Upper bound for $u$. If None (default), automatically set from
+        the spectral radius of $\eta(I)$.
+    u_min : float
+        Lower bound for $u$.
     n_points : int
         Grid size.
     tol : float
-        Newton tolerance.
+        Solver tolerance.
+    method : ``"hfs"`` or ``"newton"``
+        Solver to use; see :func:`hms_sweep`.
     verbose : bool
         If True, print a summary table.
+    progress : bool or int
+        If True, print a progress line approximately every 10%% of the
+        sweep, including the current $u$, $\operatorname{tr} W$,
+        residual, and a running log-log slope estimate.
+        If a positive integer, print every that many steps.
 
     Returns
     -------
@@ -300,7 +390,7 @@ def singularity_report(
         ``singular`` : bool — True if $\operatorname{tr} W(u) \to \infty$.
     """
     sweep = hms_sweep(A, u_max=u_max, u_min=u_min, n_points=n_points,
-                      tol=tol)
+                      tol=tol, method=method, progress=progress)
     conv = sweep["converged"]
     n_conv = np.sum(conv)
 

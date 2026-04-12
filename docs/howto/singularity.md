@@ -153,6 +153,7 @@ print(f"alpha_eigs: {r1['alpha_eigs']} vs {r2['alpha_eigs']}")       # swapped
 * **Rational approximation.**  The report uses `Fraction.limit_denominator(12)`
   to identify the nearest simple fraction — useful for recognizing exponents
   like $-1/3$, $-1/2$, $-1/4$ that arise from low-degree algebraic equations.
+* **Progress report.** Use singularity_report([A1, A2], progress=True) to see the progress.   
 
 ## See also
 
