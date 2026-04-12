@@ -37,6 +37,13 @@ from .transforms import (
 
 from .ensembles import random_semicircle
 
+from .singularity import (
+    solve_hms,
+    hms_sweep,
+    puiseux_exponent,
+    singularity_report,
+)
+
 from .quadrature import (
     cauchy_matrix_semicircle_bruteforce,
     h_matrix_semicircle_bruteforce,
@@ -79,6 +86,11 @@ __all__ = [
     "semicircle_cauchy_scalar",
     "subordination_kronecker",
     "lambda_eps",
+    # singularity analysis
+    "solve_hms",
+    "hms_sweep",
+    "puiseux_exponent",
+    "singularity_report",
     # ensembles
     "random_semicircle",
     # quadrature
