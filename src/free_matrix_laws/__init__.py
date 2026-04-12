@@ -39,8 +39,6 @@ from .ensembles import random_semicircle
 
 from .singularity import (
     solve_hms,
-    hms_sweep,
-    puiseux_exponent,
     singularity_report,
 )
 
@@ -88,8 +86,6 @@ __all__ = [
     "lambda_eps",
     # singularity analysis
     "solve_hms",
-    "hms_sweep",
-    "puiseux_exponent",
     "singularity_report",
     # ensembles
     "random_semicircle",

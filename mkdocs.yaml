@@ -21,6 +21,7 @@ nav:
     - Operator-valued maps: api/opvalued.md
     - Random Ensembles: api/ensembles.md
     - Quadrature (brute-force): api/quadrature.md
+    - Singularity analysis: api/singularity.md
   - How-to: 
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
@@ -31,6 +32,7 @@ nav:
     - Biased semicircle density: howto/biased_semicircle_density.md
     - Polynomial semicircle (linearization): howto/polynomial_semicircle.md
     - CP Sinkhorn (symmetric OSI): howto/cp_sinkhorn.md
+    - Singularity analysis at zero: howto/singularity.md
     - Quadrature-based Cauchy transform: howto/quadrature.md
     - Fixed-point iterations (internals): howto/iterations.md
 markdown_extensions:
