@@ -14,6 +14,8 @@
         - polynomial_density
         - semicircle_density_scalar
         - semicircle_cauchy_scalar
+        - free_poisson_density_scalar
+        - free_poisson_cauchy_scalar
         - cauchy_kronecker
         - h_kronecker
         - cauchy_kronecker_semicircle
