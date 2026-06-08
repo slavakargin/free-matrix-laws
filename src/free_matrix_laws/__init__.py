@@ -30,6 +30,8 @@ from .transforms import (
     # Scalar helpers
     semicircle_density_scalar,
     semicircle_cauchy_scalar,
+    free_poisson_density_scalar,
+    free_poisson_cauchy_scalar,
     # Utilities
     subordination_kronecker,
     lambda_eps,
@@ -82,6 +84,8 @@ __all__ = [
     "polynomial_density",
     "semicircle_density_scalar",
     "semicircle_cauchy_scalar",
+    "free_poisson_density_scalar",
+    "free_poisson_cauchy_scalar",
     "subordination_kronecker",
     "lambda_eps",
     # singularity analysis

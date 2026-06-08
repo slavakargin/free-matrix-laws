@@ -32,6 +32,10 @@ Scalar (classical) helpers:
   — Wigner semicircle density
 * :func:`semicircle_cauchy_scalar`
   — scalar Cauchy transform of the semicircle law
+* :func:`free_poisson_density_scalar`
+  — free Poisson (Marchenko--Pastur) density
+* :func:`free_poisson_cauchy_scalar`
+  — scalar Cauchy transform of the free Poisson law
 
 Utilities:
 
@@ -968,6 +972,109 @@ def semicircle_cauchy_scalar(z, c: float = 1.0):
 
     G = (z_arr - disc) / (2.0 * c)
     return G if z_arr.ndim else complex(G)
+
+
+def free_poisson_cauchy_scalar(z, lam: float = 1.0):
+    r"""
+    Scalar Cauchy (Stieltjes) transform of the free Poisson (Marchenko--Pastur)
+    law with rate $\lambda>0$ and unit jump size.
+
+    With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+    $$
+      G(z) \;=\; \frac{\,1 + z - \lambda - \sqrt{(z-a)(z-b)}\,}{2z}.
+    $$
+    For $\lambda<1$ the law has an atom of mass $1-\lambda$ at the origin; this
+    formula already accounts for it (the principal branch produces a simple pole
+    at $z=0$ with residue $1-\lambda$), so **no** extra term is added.
+
+    The square-root branch is chosen so that
+    $\Im z>0 \Rightarrow \Im G(z)<0$, i.e. $G$ maps the upper half-plane to the
+    lower half-plane.
+
+    Parameters
+    ----------
+    z : complex or array_like
+        Point(s) at which to evaluate the transform.
+    lam : float, default 1.0
+        Rate parameter $\lambda>0$.
+
+    Returns
+    -------
+    complex or ndarray
+        The value(s) $G(z)$.
+
+    See Also
+    --------
+    free_poisson_density_scalar : The corresponding (a.c.) density.
+    semicircle_cauchy_scalar : Scalar Cauchy transform of the semicircle law.
+
+    Examples
+    --------
+    Use as the scalar law in a Kronecker / subordination computation:
+
+    >>> import numpy as np
+    >>> from functools import partial
+    >>> from free_matrix_laws import cauchy_kronecker, free_poisson_cauchy_scalar
+    >>> Gp = partial(free_poisson_cauchy_scalar, lam=4.0)
+    >>> w = (5.0 + 0.05j) * np.eye(3)
+    >>> a = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]], dtype=float)
+    >>> G = cauchy_kronecker(w, a, cauchy_scalar=Gp)
+    >>> G.shape
+    (3, 3)
+    """
+    if lam <= 0:
+        raise ValueError("lam must be > 0")
+    z_arr = np.asarray(z, dtype=np.complex128)
+    a = (1.0 - np.sqrt(lam))**2
+    b = (1.0 + np.sqrt(lam))**2
+    disc = np.sqrt((z_arr - a) * (z_arr - b))
+    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
+    # The principal branch already encodes the atom of mass (1 - lam) at 0
+    # when lam < 1 (simple pole at z = 0), so no extra term is needed.
+    G = (1.0 + z_arr - lam - disc) / (2.0 * z_arr)
+    return G if z_arr.ndim else complex(G)
+
+
+def free_poisson_density_scalar(x, lam: float = 1.0):
+    r"""
+    Absolutely continuous part of the free Poisson (Marchenko--Pastur) density
+    with rate $\lambda>0$ and unit jump size.
+
+    With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+    $$
+      f(x) \;=\; \frac{\sqrt{(b-x)(x-a)}}{2\pi x}\,
+      \mathbf 1_{\{a \le x \le b\}}.
+    $$
+    For $\lambda<1$ the law additionally has an atom of mass $1-\lambda$ at the
+    origin, which is **not** represented by this density.
+
+    Parameters
+    ----------
+    x : float or array_like
+        Point(s) at which to evaluate the density.
+    lam : float, default 1.0
+        Rate parameter $\lambda>0$.
+
+    Returns
+    -------
+    float or ndarray
+
+    See Also
+    --------
+    free_poisson_cauchy_scalar : The corresponding Cauchy transform.
+    semicircle_density_scalar : Density of the semicircle law.
+    """
+    if lam <= 0:
+        raise ValueError("lam must be > 0")
+    x_arr = np.asarray(x, dtype=float)
+    a = (1.0 - np.sqrt(lam))**2
+    b = (1.0 + np.sqrt(lam))**2
+    inside = (b - x_arr) * (x_arr - a)
+    in_support = (x_arr > a) & (x_arr < b)
+    # Safe denominator so the masked-out x=0 (when lam=1, a=0) never divides by 0.
+    denom = np.where(in_support, 2.0 * np.pi * x_arr, 1.0)
+    y = np.where(in_support, np.sqrt(np.maximum(inside, 0.0)) / denom, 0.0)
+    return y if x_arr.ndim else float(y)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
