@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+from scipy.integrate import trapezoid
 
 from free_matrix_laws import semicircle_density_scalar, semicircle_density
 
@@ -24,7 +25,7 @@ def test_normalization_by_trapz():
     R = 2*np.sqrt(c)
     xs = np.linspace(-R, R, 2001)
     fx = semicircle_density_scalar(xs, c)
-    Z = np.trapz(fx, xs)
+    Z = trapezoid(fx, xs)
     npt.assert_allclose(Z, 1.0, rtol=5e-3, atol=5e-3)
 
 def test_invalid_c_raises():
