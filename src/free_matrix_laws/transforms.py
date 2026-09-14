@@ -26,6 +26,12 @@ Scalar densities:
 * :func:`polynomial_density`
   — density of $p(X_1,\dots,X_s)$
 
+Determinants:
+
+* :func:`biased_matrix_semicircle_logdet`
+  — log Fuglede--Kadison determinant of $a_0 + \sum_i A_i \otimes X_i$
+  (alias ``bms_logdet``)
+
 Scalar (classical) helpers:
 
 * :func:`semicircle_density_scalar`
@@ -835,6 +841,98 @@ def biased_matrix_semicircle_density(
     Calls ``matrix_semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)``.
     '''
     return matrix_semicircle_density(x, A, eps=eps, G0=G0, tol=tol, maxiter=maxiter, a0=a0)
+
+
+def biased_matrix_semicircle_logdet(
+    x: float,
+    a0,
+    A,
+    eps: float = 1e-4,
+    G0=None,
+    tol: float = 1e-12,
+    maxiter: int = 5000,
+) -> float:
+    r'''
+    Log Fuglede--Kadison determinant of the shifted matrix semicircle
+    $S = a_0 + \sum_i A_i \otimes X_i$, where $X_i$ are free standard
+    semicircular elements and $A_i = A_i^\ast$.
+
+    Returns
+    $$
+      \log\Delta(S - x)
+      \;=\; \int_{\mathbb R} \log|t - x|\, d\mu_S(t),
+    $$
+    the log determinant with respect to $\mathrm{tr}_m \otimes \tau$
+    ($\mathrm{tr}_m = \tfrac1m \mathrm{Tr}$, $m$ the size of $a_0$).
+
+    **Method (closed formula).** Let $G = G(z)$ solve the matrix Dyson equation
+    $$
+      G^{-1} + \eta(G) = z I - a_0,
+      \qquad \eta(B) = \sum_i A_i B A_i^\ast,
+    $$
+    at $z = x + i\varepsilon$ (obtained here from
+    :func:`cauchy_biased_matrix_semicircle`). Then
+    $$
+      \log\Delta(S - x)
+      \;=\;
+      \operatorname{Re}\!\left[
+        -\frac1m \log\det G
+        + \frac12\, \mathrm{tr}_m\!\big(G\,\eta(G)\big)
+      \right].
+    $$
+    Only the real part enters, so the branch of $\log\det G$ is irrelevant; the
+    modulus form $-\tfrac1m\log|\det G|$ is used directly. The offset
+    $\varepsilon>0$ regularizes the boundary value $G(x+i0)$; the result
+    approaches $\log\Delta(S-x)$ as $\varepsilon\downarrow0$ (the bulk error is
+    $O(\varepsilon^2)$, the edge error $O(\varepsilon)$).
+
+    Parameters
+    ----------
+    x : float
+        Real shift; the determinant is evaluated for $S - x$.
+    a0 : (m,m) ndarray
+        Bias (mean) matrix $a_0 = a_0^\ast$.
+    A : sequence[(m,m)] or (r,m,m) ndarray
+        Hermitian coefficients $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    eps : float, default 1e-4
+        Imaginary offset in $z = x + i\varepsilon$.
+    G0 : (m,m) ndarray, optional
+        Warm start for the Dyson solver.
+    tol : float, default 1e-12
+        Frobenius-norm tolerance on the Dyson residual.
+    maxiter : int, default 5000
+        Iteration cap for the Dyson solver.
+
+    Returns
+    -------
+    float
+        $\log\Delta(S - x)$. Exponentiate to obtain $\Delta(S - x)$ itself.
+
+    See Also
+    --------
+    cauchy_biased_matrix_semicircle : Solver for the matrix Dyson equation.
+    biased_matrix_semicircle_density : Spectral density of the same object.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from free_matrix_laws import biased_matrix_semicircle_logdet as bms_logdet
+    >>> A = np.array([[[1.0]]])           # scalar: sigma = 1
+    >>> a0 = np.array([[0.0]])
+    >>> round(bms_logdet(3.0, a0, A), 4)  # outside [-2, 2]
+    1.0354
+    '''
+    a0 = np.asarray(a0, dtype=complex)
+    m = a0.shape[0]
+    z = x + 1j * eps
+    G = cauchy_biased_matrix_semicircle(z, a0, A, G0=G0, tol=tol, maxiter=maxiter)
+    _, logabsdet = la.slogdet(G)                 # logabsdet = log|det G|
+    trace_term = np.trace(G @ eta(G, A)) / m     # tr_m(G eta(G))
+    return float(-logabsdet / m + 0.5 * np.real(trace_term))
+
+
+# Short alias
+bms_logdet = biased_matrix_semicircle_logdet
 
 
 def polynomial_density(

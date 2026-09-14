@@ -1,7 +1,51 @@
-"""
+r"""
 Numerical transforms for matrix-/operator-valued free probability.
+
+Primary API (v0.1.0)
+---------------------
+Cauchy transforms (matrix-valued):
+
+* :func:`cauchy_matrix_semicircle`
+  — $G(z)$ for $S = \sum_i A_i \otimes X_i$
+* :func:`cauchy_kronecker`
+  — $G_a(w) = E[(w - a \otimes X)^{-1}]$ for any scalar distribution (fast, $O(n^3)$)
+* :func:`cauchy_kronecker_semicircle`
+  — specialization to $X$ semicircular
+* :func:`cauchy_biased_matrix_semicircle`
+  — $G(z)$ for $S = a_0 + \sum_i A_i \otimes X_i$
+* :func:`cauchy_polynomial`
+  — $G(z)$ for a self-adjoint polynomial $p(X_1,\dots,X_s)$
+  via linearization
+
+Scalar densities:
+
+* :func:`matrix_semicircle_density`
+  — density of $\sum_i A_i \otimes X_i$
+* :func:`biased_matrix_semicircle_density`
+  — density of $a_0 + \sum_i A_i \otimes X_i$
+* :func:`polynomial_density`
+  — density of $p(X_1,\dots,X_s)$
+
+Scalar (classical) helpers:
+
+* :func:`semicircle_density_scalar`
+  — Wigner semicircle density
+* :func:`semicircle_cauchy_scalar`
+  — scalar Cauchy transform of the semicircle law
+* :func:`free_poisson_density_scalar`
+  — free Poisson (Marchenko--Pastur) density
+* :func:`free_poisson_cauchy_scalar`
+  — scalar Cauchy transform of the free Poisson law
+
+Utilities:
+
+* :func:`subordination_kronecker`
+  — subordination function $\omega_1(b)$ for free additive convolution
+* :func:`lambda_eps` — regularized spectral parameter $\Lambda_\varepsilon(z)$
 """
 from __future__ import annotations
+
+import warnings
 import numpy as np
 import numpy.linalg as la
 from typing import Callable, Optional, Tuple
@@ -9,28 +53,28 @@ from typing import Callable, Optional, Tuple
 
 from .opvalued import covariance_map as eta  # η(B)=Σ A_i B A_i^*
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Internal iteration maps
+# ═══════════════════════════════════════════════════════════════════════════
+
 def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
     r'''
-    Half-averaged fixed-point step for the operator-valued semicircle Cauchy transform.
+    Half-averaged fixed-point step for the unbiased matrix semicircle.
 
-    We seek $G(z)$ solving Speicher's equation
-    $$
-        z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0,
-    $$
-    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$ is a completely positive (Kraus) map.
-
-    This iteration map applies the *half-averaged* Picard step
+    One step of the iteration
     $$
         T(G)\;=\;\tfrac12\Big( G \;+\; (\,zI - \eta(G)\,)^{-1}\Big),
     $$
-    and is often more stable than the raw resolvent update for $\Im z>0$.
+    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$.
+
+    This is a low-level building block for :func:`cauchy_matrix_semicircle`.
 
     Parameters
     ----------
     G : (n, n) array_like (complex recommended)
         Current iterate for $G(z)$.
     z : complex
-        Spectral parameter with $\Im z>0$ (ensures resolvent well-defined).
+        Spectral parameter with $\Im z>0$.
     A : sequence of (n, n) arrays or stacked array (s, n, n)
         Kraus operators $A_i$ defining $\eta$.
 
@@ -41,22 +85,21 @@ def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
 
     Notes
     -----
-    • Uses the CP form with $A_i^\ast$ so **no** self-adjointness of $A_i$ is required.  
-    • Requires $(zI-\eta(G))$ to be invertible; for $\Im z>0$ this holds in the
+    * Uses the CP form with $A_i^\ast$ so **no** self-adjointness of $A_i$ is required.
+    * Requires $(zI-\eta(G))$ to be invertible; for $\Im z>0$ this holds in the
       standard operator-valued semicircle setup.
 
     References
     ----------
-    • R. Speicher, *Combinatorial theory of the free product with amalgamation
-      and operator-valued free probability theory*, Mem. AMS **132** (627), 1998.  
-    • R. Rashidi Far, T. Oraby, W. Bryc, R. Speicher, *Spectra of large block matrices*, 2006.
+    * R. Speicher, *Combinatorial theory of the free product with amalgamation
+      and operator-valued free probability theory*, Mem. AMS **132** (627), 1998.
+    * R. Rashidi Far, T. Oraby, W. Bryc, R. Speicher, *Spectra of large block matrices*, 2006.
     '''
     G = np.asarray(G)
     if G.ndim != 2 or G.shape[0] != G.shape[1]:
         raise ValueError(f"G must be square (n,n); got {G.shape!r}")
     n = G.shape[0]
 
-    # ensure complex path (so conjugations inside η behave as expected)
     dtype = np.result_type(G.dtype, np.complex64)
     I = np.eye(n, dtype=dtype)
 
@@ -68,15 +111,77 @@ def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
     return 0.5 * (G.astype(dtype, copy=False) + K)
 
 
-def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
-                            tol: float = 1e-10, maxiter: int = 500) -> np.ndarray:
+def _hfsb_map(G: np.ndarray,
+              z: complex,
+              a0: np.ndarray,
+              A,
+              relax: float = 0.5) -> np.ndarray:
     r'''
-    Solve the operator-valued semicircle equation
+    One step of the Helton--Far--Speicher iteration for the **biased** matrix
+    semicircle.
+
+    For $S=a_0 + \sum_i A_i \otimes X_i$ with semicircular $X_i$ and covariance
+    $\eta(B)=\sum_i A_i B A_i^\ast$, the Cauchy transform $G(z)$ solves
+    $$
+      G \;=\; (z I - a_0 - \eta(G))^{-1}
+      \quad\Longleftrightarrow\quad
+      (z I - a_0)\,G \;=\; I + \eta(G)\,G .
+    $$
+    Define $b := z\,(z I - a_0)^{-1}$ and the map
+    $$
+      \Phi(G) \;=\; [\,z I - b\,\eta(G)\,]^{-1} b ,
+    $$
+    then this routine returns the relaxed step
+    $$
+      G_{\text{new}} \;=\; (1-\text{relax})\,G \;+\; \text{relax}\,\Phi(G).
+    $$
+
+    Parameters
+    ----------
+    G : (n,n) ndarray
+        Current iterate (aiming for $G(z)$ with $\Im z>0$).
+    z : complex
+        Spectral parameter with $\Im z>0$.
+    a0 : (n,n) ndarray
+        Bias matrix $a_0$.
+    A : sequence[(n,n)] or (s,n,n) ndarray
+        Kraus operators defining $\eta$ (list/tuple or stacked array).
+    relax : float, default 0.5
+        Averaging parameter in $(0,1]$; use $0.5$ for robust damping.
+
+    Returns
+    -------
+    (n,n) ndarray
+
+    Notes
+    -----
+    This is the core iteration step used by :func:`cauchy_biased_matrix_semicircle`.
+    The relaxation parameter controls damping: $\text{relax}=0.5$ corresponds to
+    the half-averaged scheme of Helton--Rashidi Far--Speicher (IMRN 2007).
+    '''
+    n = G.shape[0]
+    I = np.eye(n, dtype=complex)
+    b = z * la.inv(z * I - a0)
+    Phi = la.inv(z * I - b @ eta(G, A)) @ b
+    return (1.0 - relax) * G + relax * Phi
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Cauchy transforms (matrix-valued)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def cauchy_matrix_semicircle(z: complex, A, G0: np.ndarray | None = None,
+                             tol: float = 1e-10, maxiter: int = 500) -> np.ndarray:
+    r'''
+    Matrix-valued Cauchy transform of the matrix semicircle $\sum_i A_i \otimes X_i$.
+
+    Solves the operator-valued semicircle equation
     $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0, $$
     by fixed-point iteration using the half-averaged map
-    $$ G \;\mapsto\; \tfrac12\Big[\,G + (\,zI - \eta(G)\,)^{-1}\Big]. $$
+    $$ G \;\mapsto\; \tfrac12\Big[\,G + (\,zI - \eta(G)\,)^{-1}\Big], $$
+    where $\eta(B)=\sum_{i=1}^s A_i B A_i^\ast$.
 
-    This follows the numerical damping suggested by Helton-Rashidi Far–Speicher (IMRN 2007).
+    This follows the numerical damping suggested by Helton--Rashidi Far--Speicher (IMRN 2007).
 
     Parameters
     ----------
@@ -99,8 +204,12 @@ def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
     Notes
     -----
     The residual $R=zG-I-\eta(G)G$ should be small at convergence.
+
+    References
+    ----------
+    * J. W. Helton, R. Rashidi Far, R. Speicher, *Operator-valued Semicircular
+      Elements*, IMRN (2007).
     '''
-    # infer n from A
     n = (A[0].shape[0] if isinstance(A, (list, tuple)) else A.shape[-1])
     G = (-1j * np.eye(n)) if G0 is None else np.array(G0, dtype=complex)
 
@@ -112,613 +221,989 @@ def solve_cauchy_semicircle(z: complex, A, G0: np.ndarray | None = None,
     return G
 
 
-#public alias
-solve_G = solve_cauchy_semicircle
-
-##scalar observables
-def semicircle_density(x: float,
-                A,
-                eps: float = 1e-2,
-                G0=None,
-                tol: float = 1e-10,
-                maxiter: int = 10_000) -> float:
+def cauchy_kronecker(
+    w: np.ndarray,
+    a: np.ndarray,
+    cauchy_scalar: Callable = None,
+    eps: float = 1e-8,
+) -> np.ndarray:
     r'''
-    Stieltjes inversion for the **matrix semicircle** at a real point $x$.
+    Cauchy transform of a Kronecker-product random variable $a \otimes X$.
 
-    We first compute the operator-valued Cauchy transform $G(z)$ for
-    $z = x + i\,\varepsilon$ by solving
+    Computes
     $$
-        z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0,
+      G_a(w) \;=\; E\!\big[(w - a \otimes X)^{-1}\big],
     $$
-    where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$,
-    and then return the scalar density via the normalized trace
+    where $X$ is a scalar random variable with known Cauchy (Stieltjes) transform
+    $G_X(z)$, and $a$ is an $n \times n$ deterministic matrix.
+
+    **Method.** Regularize $a$ to $\tilde a = a + i\varepsilon I$ so that it is
+    invertible, then diagonalize
+    $\tilde a^{-1} w = V\,\mathrm{diag}(\mu_1,\dots,\mu_n)\,V^{-1}$.
+    The expectation reduces to
     $$
-        f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right).
+      G_a(w) \;=\; V\,\mathrm{diag}\!\big(G_X(\mu_1),\dots,G_X(\mu_n)\big)\,
+                    V^{-1}\,\tilde a^{-1},
     $$
+    where $G_X$ is the scalar Cauchy transform passed as ``cauchy_scalar``.
+
+    This is $O(n^3)$ (one eigendecomposition + two solves) regardless of
+    the underlying distribution of $X$.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix (should have $\Im w \ne 0$ in some sense,
+        e.g. $w = (x + i\varepsilon)\,I$).
+    a : (n, n) ndarray
+        The deterministic matrix in $a \otimes X$.
+    cauchy_scalar : callable, optional
+        Scalar Cauchy transform $G_X(z)$, accepting a complex array and
+        returning a complex array of the same shape.
+        Default: :func:`semicircle_cauchy_scalar` (standard Wigner law).
+    eps : float, default 1e-8
+        Regularization: replaces $a$ by $a + i\varepsilon I$ to handle
+        singular or near-singular $a$.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+        The matrix-valued Cauchy transform $G_a(w)$.
+
+    See Also
+    --------
+    cauchy_kronecker_semicircle :
+        Convenience alias with ``cauchy_scalar=semicircle_cauchy_scalar``.
+    h_kronecker :
+        Subordination h-function for the same model.
+    cauchy_matrix_semicircle :
+        General case $\sum_i A_i \otimes X_i$ (fixed-point iteration).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from free_matrix_laws import cauchy_kronecker, semicircle_cauchy_scalar
+    >>> w = (0.5 + 0.01j) * np.eye(2)
+    >>> a = np.array([[1.0, 0.2], [0.2, 0.8]])
+    >>> G = cauchy_kronecker(w, a)  # semicircle by default
+    >>> G.shape
+    (2, 2)
+
+    Use a custom scalar Cauchy transform (e.g. Marchenko–Pastur):
+
+    >>> def cauchy_mp(z, gamma=1.0):
+    ...     # Marchenko-Pastur Cauchy transform
+    ...     disc = np.sqrt((z - (1+np.sqrt(gamma))**2) *
+    ...                    (z - (1-np.sqrt(gamma))**2))
+    ...     disc = np.where(disc.imag * z.imag < 0, -disc, disc)
+    ...     return (z - gamma + 1 - disc) / (2 * gamma * z)
+    >>> G_mp = cauchy_kronecker(w, a, cauchy_scalar=cauchy_mp)
+    '''
+    if cauchy_scalar is None:
+        cauchy_scalar = semicircle_cauchy_scalar
+
+    w = np.asarray(w, dtype=complex)
+    a = np.asarray(a, dtype=complex)
+    if w.ndim != 2 or w.shape[0] != w.shape[1]:
+        raise ValueError(f"w must be square; got {w.shape!r}")
+    if a.shape != w.shape:
+        raise ValueError(f"a must have same shape as w {w.shape!r}; got {a.shape!r}")
+    if eps < 0:
+        raise ValueError("eps must be >= 0")
+
+    n = w.shape[0]
+    a_reg = a + 1j * eps * np.eye(n, dtype=complex)
+    a_reg_inv = la.inv(a_reg)
+
+    mu, V = la.eig(a_reg_inv @ w)
+    G_mu = cauchy_scalar(mu)  # vectorized over eigenvalues
+
+    return V @ np.diag(G_mu) @ la.inv(V) @ a_reg_inv
+
+
+def h_kronecker(
+    w: np.ndarray,
+    a: np.ndarray,
+    cauchy_scalar: Callable = None,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Subordination h-function for a Kronecker-product random variable $a \otimes X$.
+
+    $$
+      h_a(w) \;=\; G_a(w)^{-1} \;-\; w,
+    $$
+    where $G_a(w)$ is computed by :func:`cauchy_kronecker`.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    cauchy_scalar : callable, optional
+        Scalar Cauchy transform $G_X(z)$.
+        Default: :func:`semicircle_cauchy_scalar`.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+
+    See Also
+    --------
+    h_kronecker_semicircle :
+        Convenience alias for the semicircle case.
+    cauchy_kronecker :
+        The underlying Cauchy transform.
+    '''
+    G = cauchy_kronecker(w, a, cauchy_scalar=cauchy_scalar, eps=eps)
+    return la.inv(G) - w
+
+
+def cauchy_kronecker_semicircle(
+    w: np.ndarray,
+    a: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Cauchy transform of the Kronecker-product semicircle $a \otimes X$.
+
+    Convenience alias for
+    ``cauchy_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
+
+    See :func:`cauchy_kronecker` for full documentation.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+    '''
+    return cauchy_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)
+
+
+def h_kronecker_semicircle(
+    w: np.ndarray,
+    a: np.ndarray,
+    eps: float = 1e-8,
+) -> np.ndarray:
+    r'''
+    Subordination h-function for the Kronecker-product semicircle $a \otimes X$.
+
+    Convenience alias for
+    ``h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
+
+    See :func:`h_kronecker` for full documentation.
+
+    Parameters
+    ----------
+    w : (n, n) ndarray
+        Spectral parameter matrix.
+    a : (n, n) ndarray
+        Deterministic matrix in $a \otimes X$.
+    eps : float, default 1e-8
+        Regularization parameter.
+
+    Returns
+    -------
+    (n, n) ndarray (complex)
+    '''
+    return h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)
+
+
+def subordination_kronecker(
+    b: np.ndarray,
+    a1: np.ndarray,
+    a2: np.ndarray,
+    cauchy_scalar_x: Callable = None,
+    cauchy_scalar_y: Callable = None,
+    eps: float = 1e-4,
+    tol: float = 1e-8,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+) -> np.ndarray:
+    r'''
+    Subordination function $\omega_1(b)$ for the free additive convolution
+    of two Kronecker-product random variables $a_1 \otimes X$ and $a_2 \otimes Y$.
+
+    Computes the fixed point of the map
+    $$
+      w \;\mapsto\; h_Y\!\big(h_X(w) + b\big) + b,
+    $$
+    where $h_X(w) = G_{a_1 \otimes X}(w)^{-1} - w$ and
+    $h_Y(w) = G_{a_2 \otimes Y}(w)^{-1} - w$ are the subordination h-functions
+    computed via :func:`h_kronecker`.
+
+    After convergence, the Cauchy transform of the sum $p(X,Y)$ (as encoded
+    by the linearization $b = \Lambda_\varepsilon(z) - a_0$) can be recovered as
+    $$
+      G_{X+Y}(b) \;=\; G_{a_1 \otimes X}\!\big(\omega_1(b)\big).
+    $$
+
+    Parameters
+    ----------
+    b : (n, n) ndarray
+        The "driving matrix," typically $b = \Lambda_\varepsilon(z) - a_0$
+        for a linearization $L_p = a_0 + a_1 \otimes X + a_2 \otimes Y$.
+    a1 : (n, n) ndarray
+        Deterministic matrix for the first variable ($a_1 \otimes X$).
+    a2 : (n, n) ndarray
+        Deterministic matrix for the second variable ($a_2 \otimes Y$).
+    cauchy_scalar_x : callable, optional
+        Scalar Cauchy transform $G_X(z)$ for the first variable.
+        Default: :func:`semicircle_cauchy_scalar`.
+    cauchy_scalar_y : callable, optional
+        Scalar Cauchy transform $G_Y(z)$ for the second variable.
+        Default: :func:`semicircle_cauchy_scalar`.
+    eps : float, default 1e-4
+        Regularization for the Kronecker h-functions. Larger than the
+        default in :func:`cauchy_kronecker` because linearization matrices
+        $a_1, a_2$ are typically rank-deficient.
+    tol : float, default 1e-8
+        Convergence tolerance (Frobenius norm of $w_{k+1} - w_k$).
+        Note: with ``eps=1e-4``, achievable accuracy is roughly $O(\varepsilon)$,
+        so tighter tolerances may not be reached.
+    maxiter : int, default 10000
+        Maximum iterations.
+    return_info : bool, default False
+        If True, also return a dict with diagnostics.
+
+    Returns
+    -------
+    omega : (n, n) ndarray (complex)
+        The subordination function $\omega_1(b)$.
+    info : dict (only if return_info=True)
+        Keys: ``iters``, ``last_diff``.
+
+    See Also
+    --------
+    h_kronecker : The h-function used at each step.
+    cauchy_kronecker : To recover $G_{X+Y}(b)$ from $\omega_1(b)$.
+
+    Examples
+    --------
+    Anticommutator of two free semicircles via subordination:
+
+    >>> import numpy as np
+    >>> from free_matrix_laws import (
+    ...     subordination_kronecker, cauchy_kronecker_semicircle, lambda_eps
+    ... )
+    >>> A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
+    >>> A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+    >>> A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
+    >>> z = 0.5 + 0.01j
+    >>> b = lambda_eps(z, 3) - A0
+    >>> omega = subordination_kronecker(b, A1, A2)
+    >>> G = cauchy_kronecker_semicircle(omega, A1)
+    >>> density = -G[0, 0].imag / np.pi
+
+    Anticommutator with different distributions (e.g. free Poisson):
+
+    >>> def cauchy_poisson(z, lam=4.0):
+    ...     a = (1 - np.sqrt(lam))**2
+    ...     b = (1 + np.sqrt(lam))**2
+    ...     disc = np.sqrt((z - a) * (z - b))
+    ...     disc = np.where(disc.imag * z.imag < 0, -disc, disc)
+    ...     return (1 + z - lam - disc) / (2 * z)
+    >>> omega = subordination_kronecker(b, A1, A2,
+    ...     cauchy_scalar_x=cauchy_poisson, cauchy_scalar_y=cauchy_poisson)
+
+    References
+    ----------
+    * S. Belinschi, T. Mai, R. Speicher, *Analytic subordination theory of
+      operator-valued free additive convolution and the solution of a general
+      random matrix problem*, J. reine angew. Math. **732** (2017), 21–53.
+    '''
+    if cauchy_scalar_x is None:
+        cauchy_scalar_x = semicircle_cauchy_scalar
+    if cauchy_scalar_y is None:
+        cauchy_scalar_y = semicircle_cauchy_scalar
+
+    b = np.asarray(b, dtype=complex)
+    a1 = np.asarray(a1, dtype=complex)
+    a2 = np.asarray(a2, dtype=complex)
+    n = b.shape[0]
+
+    W = 1j * np.eye(n, dtype=complex)  # initialization
+
+    last_diff = np.inf
+    for k in range(1, maxiter + 1):
+        W1 = h_kronecker(W, a1, cauchy_scalar=cauchy_scalar_x, eps=eps) + b
+        W_new = h_kronecker(W1, a2, cauchy_scalar=cauchy_scalar_y, eps=eps) + b
+
+        diff = la.norm(W_new - W, 'fro')
+        last_diff = diff
+
+        if diff <= tol:
+            W = W_new
+            break
+        W = W_new
+
+    if return_info:
+        return W, {"iters": k, "last_diff": float(last_diff)}
+    return W
+
+
+def cauchy_biased_matrix_semicircle(
+    z: complex,
+    a0: np.ndarray,
+    A,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-12,
+    maxiter: int = 5000,
+    relax: float = 0.5,
+    return_info: bool = False,
+):
+    r'''
+    Matrix-valued Cauchy transform of the biased matrix semicircle
+    $S = a_0 + \sum_i A_i \otimes X_i$.
+
+    Solves
+    $$
+      G \;=\; (z I - a_0 - \eta(G))^{-1},
+      \qquad \Im z>0 ,
+    $$
+    via the relaxed iteration
+    $$
+      G_{k+1} \;=\; (1-\text{relax})\,G_k \;+\; \text{relax}\,[\,z I - b\,\eta(G_k)\,]^{-1} b,
+      \quad b=z(z I - a_0)^{-1}.
+    $$
+
+    Convergence is checked via the residual
+    $$
+      R(G):= (z I - a_0)\,G - I - \eta(G)\,G,
+    $$
+    stopping when $\|R(G)\|_{\mathrm{F}} \le \text{tol}$.
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter with $\Im z>0$.
+    a0 : (n,n) ndarray
+        Bias matrix.
+    A : sequence[(n,n)] or (s,n,n) ndarray
+        Kraus operators for $\eta$.
+    G0 : (n,n) ndarray, optional
+        Warm start; if None, uses $(\Im z)^{-1} i\,I$.
+    tol : float, default 1e-12
+        Frobenius-norm tolerance on the residual.
+    maxiter : int, default 5000
+        Iteration cap.
+    relax : float, default 0.5
+        Averaging parameter in $(0,1]$.
+    return_info : bool, default False
+        If True, also return a dict with residual and iterations.
+
+    Returns
+    -------
+    G : (n,n) ndarray
+    info : dict (only if return_info=True)
+        Keys: ``residual``, ``iters``.
+    '''
+    n = a0.shape[0]
+    I = np.eye(n, dtype=complex)
+    if G0 is None:
+        eps_imag = float(np.imag(z))
+        if eps_imag <= 0:
+            eps_imag = 1e-2
+        G = -1j * I / eps_imag
+    else:
+        G = G0.astype(complex, copy=True)
+
+    for k in range(1, maxiter + 1):
+        G = _hfsb_map(G, z, a0, A, relax=relax)
+        r = (z * I - a0) @ G - I - eta(G, A) @ G
+        res = la.norm(r, 'fro')
+        if res <= tol:
+            if return_info:
+                return G, {"residual": res, "iters": k}
+            return G
+    if return_info:
+        return G, {"residual": res, "iters": maxiter}
+    return G
+
+
+def cauchy_polynomial(
+    z: complex,
+    a0: np.ndarray,
+    A,
+    *,
+    eps_reg: float = 1e-6,
+    block_size: int = 1,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+):
+    r'''
+    Cauchy transform of a self-adjoint polynomial $p(X_1,\dots,X_s)$ via linearization.
+
+    Given a self-adjoint linearization
+    $$
+      L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i,
+    $$
+    with semicircular $X_i$, we form
+    $$
+      b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
+      \qquad
+      \eta(B) := \sum_{i=1}^s A_i\,B\,A_i^\ast,
+    $$
+    where
+    $$
+    \Lambda_\varepsilon(z)=\operatorname{diag}
+        \big(z I_k,\ i\varepsilon\, I_{n-k}\big),
+        \qquad k=\text{block\_size}.
+    $$
+
+    The iteration uses the half-averaged update
+    $$
+      G_{new} = \frac12\Big[G + \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1}
+                 b_\varepsilon(z)\Big],
+    $$
+    and stops when $\|G_{new}-G\|_F \le \text{tol}\,\|G\|_F$.
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter with $\Im z>0$ (typically $z=x+i\,\varepsilon$).
+    a0 : (n,n) array
+        The bias / constant term of the linearization.
+    A : sequence of (n,n) arrays or stacked array (s,n,n)
+        Coefficients $A_i$ defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    eps_reg : float, default 1e-6
+        Regularization parameter in $\Lambda_\varepsilon(z)$ (lower block).
+    block_size : int, default 1
+        Size $k$ of the distinguished top-left block.
+    G0 : (n,n) array, optional
+        Initial iterate. If None, uses $G_0 = (1/z)I$.
+    tol : float, default 1e-10
+        Relative tolerance.
+    maxiter : int, default 10000
+        Maximum number of iterations.
+    return_info : bool, default False
+        If True, also return a dict with diagnostics.
+
+    Returns
+    -------
+    G : (n,n) array
+        Approximation to the fixed point $G(z,b_\varepsilon(z))$.
+    info : dict (optional)
+        Keys: 'iters', 'last_diff'.
+
+    Notes
+    -----
+    After computing $G(z,b_\varepsilon(z))$, the scalar Cauchy transform of $p$
+    is obtained from the distinguished corner via
+    $$
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
+          \big(G(z,b_\varepsilon(z))\big)_{11},
+    $$
+    with $k=\text{block\_size}$ and $(\cdot)_{11}$ the top-left $k\times k$ block.
+    '''
+    a0 = np.asarray(a0)
+    if a0.ndim != 2 or a0.shape[0] != a0.shape[1]:
+        raise ValueError(f"a0 must be square; got {a0.shape!r}")
+    n = a0.shape[0]
+
+    if G0 is None:
+        G = (1.0 / complex(z)) * np.eye(n, dtype=complex)
+    else:
+        G = np.asarray(G0, dtype=complex)
+        if G.shape != (n, n):
+            raise ValueError(f"G0 must have shape {(n,n)!r}; got {G.shape!r}")
+
+    last_diff = np.inf
+    for k in range(1, maxiter + 1):
+        G1 = _hfsc_map(G, z, a0, A, eps_reg=eps_reg, block_size=block_size)
+        diff = la.norm(G1 - G, "fro")
+        denom = max(1.0, la.norm(G, "fro"))
+        last_diff = diff
+
+        if diff <= tol * denom:
+            G = G1
+            break
+        G = G1
+
+    if return_info:
+        return G, {"iters": k, "last_diff": float(last_diff)}
+    return G
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Scalar density functions
+# ═══════════════════════════════════════════════════════════════════════════
+
+def matrix_semicircle_density(
+    x: float,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    a0=None,
+) -> float:
+    r'''
+    Scalar density of the matrix semicircle $\sum_i A_i \otimes X_i$
+    (optionally with bias $a_0$).
+
+    Unbiased case ($a_0$ is ``None``): compute $G(z)$ for $z=x+i\varepsilon$ from
+    $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \eta(B)=\sum_{i=1}^s A_i B A_i^\ast, $$
+    then return the scalar density
+    $$ f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
+       \mathrm{tr}\,G(x+i\varepsilon)\right). $$
+
+    Biased case ($a_0 \ne 0$): compute $G_{a_0+X}(z)$ via
+    :func:`cauchy_biased_matrix_semicircle` and apply the same inversion.
 
     Parameters
     ----------
     x : float
         Real evaluation point.
     A : sequence of $(n,n)$ arrays or stacked array $(s,n,n)$
-        Kraus operators $A_i$ (no self-adjointness required).
+        Kraus operators $A_i$.
     eps : float, default 1e-2
-        Imaginary offset $\varepsilon>0$. Smaller $\varepsilon$ gives a sharper
-        approximation but may need tighter tolerances.
+        Imaginary offset $\varepsilon>0$ for $z=x+i\varepsilon$.
     G0 : (n,n) array, optional
-        Initial iterate for $G$ (default $-iI$ inside the solver).
+        Initial iterate (passed to the solver).
     tol : float, default 1e-10
-        Relative fixed-point tolerance for the solver.
+        Relative fixed-point tolerance.
     maxiter : int, default 10000
         Maximum iterations.
+    a0 : (n,n) array or ``None``
+        Bias matrix. If provided, computes density for $a_0 + \sum_i A_i \otimes X_i$.
 
     Returns
     -------
     float
         Approximation to $f(x)$.
-
-    Notes
-    -----
-    This computes $m(z)=\tfrac{1}{n}\mathrm{tr}\,G(z)$ and applies the Stieltjes
-    formula $f(x)=-(1/\pi)\Im m(x+i\varepsilon)$.  See Helton–Rashidi Far–Speicher
-    (IMRN 2007) for the half-averaged fixed-point step used in the solver.
     '''
     if eps <= 0:
         raise ValueError("eps must be > 0")
 
-    # Infer n from A (list/tuple or stacked array)
     if isinstance(A, np.ndarray) and A.ndim == 3:
         n = A.shape[-1]
     elif isinstance(A, np.ndarray) and A.ndim == 2:
         n = A.shape[0]
         A = A[None, ...]
     else:
+        A = list(A)
         n = A[0].shape[0]
 
+    if a0 is not None:
+        a0 = np.asarray(a0)
+        if a0.shape != (n, n):
+            raise ValueError(f"a0 must have shape {(n,n)}, got {a0.shape}")
+
     z = float(x) + 1j * float(eps)
-    G = solve_cauchy_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
+
+    if a0 is None:
+        G = cauchy_matrix_semicircle(z, A, G0=G0, tol=tol, maxiter=maxiter)
+    else:
+        G = cauchy_biased_matrix_semicircle(z, a0, A, G0=G0, tol=tol, maxiter=maxiter)
+
     m = np.trace(G) / n
     f = (-1.0 / np.pi) * np.imag(m)
     return float(f)
 
-#public alias
-get_density = semicircle_density
 
-# ---- Extracted functions from the notebook ----
+def biased_matrix_semicircle_density(
+    x: float,
+    a0,
+    A,
+    eps: float = 1e-2,
+    G0=None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+) -> float:
+    r'''
+    Scalar density of the biased matrix semicircle
+    $S = a_0 + \sum_i A_i \otimes X_i$.
 
+    Convenience wrapper:
+    $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
+       \mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
 
-#(2b) the main iteration steps in the calculation of the density for a
-#biased matrix semicircle
-def hfsb_map(G, z, a, AA):
-  ''' G is a matrix, z is a complex number with positive imaginary part,
-  a is a bias matrix, AA is a list of matrices
-  needed to define the function $\eta$.
-  '''
-  n = G.shape[0]
-  b = z * la.inv(z * np.eye(n) - a)
-  W = la.inv(z * np.eye(n) - b @ eta(G, AA)) @ b
-  return (G + W)/2
-  #return W
-
-#(3b) calculates the Cauchy transform and the density of a biased matrix semicircle
-def get_density_B(x, a, AA, eps=0.01, max_iter=10000):
-  ''' Calculate the density at the real point x, given the data
-  in the tuple of matrices $AA = (A1, \ldots, As)$, and the bias matrix a.
-  Uses eps as the distance of the point $x + i eps$ from the
-  real axis.
-  '''
-  z = x + 1j * eps
-  n = AA[0].shape[0]
-  G = 1/z * np.eye(n) #initialization
-  diffs = np.zeros((max_iter, 1))
-  for i in range(max_iter):
-    G1 = hfsb_map(G, z, a, AA)
-    diffs[i] = la.norm(G1 - G)
-    if la.norm(G1 - G) < 1e-14:
-      break
-    G = G1
-    if i == max_iter - 1:
-      print("Warning: no convegence after ", max_iter, "iterations")
-  f = (-1/np.pi) * np.imag(np.trace(G)/n)
-  #plt.plot(diffs) #this is for diagnostic purposes
-  #plt.yscale("log")
-  return f
-
-
-#(2c) An iteration step in the calculation of the Cauchy transform
-# and the density for a polynomial in semicircle r.v.s.
-def hfsc_map(G, z, a, AA):
-  ''' G is a matrix, z is a complex number with positive imaginary part,
-  a is a bias matrix, AA is a list of matrices
-  needed to define the function $\eta$.
-  '''
-  n = G.shape[0]
-  b = z * la.inv(Lambda(z, n) - a)
-  W = la.inv(z * np.eye(n) - b @ eta(G, AA)) @ b
-  return (G + W)/2
-  #return W
-
-#(3c) A function that computes the Cauchy transform and the density for
-#a polynomial in semicircle r.v.s.
-def get_density_C(x, a, AA, eps=0.01, max_iter=10000):
-  ''' Calculate the density at the real point x, given the data
-  in the tuple of matrices $AA = (A1, \ldots, As)$, and the bias matrix a.
-  Uses eps as the distance of the point $x + i eps$ from the
-  real axis.
-  '''
-  z = x + 1j * eps
-  n = AA[0].shape[0]
-  G = 1/z * np.eye(n) #initialization
-  diffs = np.zeros((max_iter, 1))
-  for i in range(max_iter):
-    G1 = hfsc_map(G, z, a, AA)
-    diffs[i] = la.norm(G1 - G)
-    if la.norm(G1 - G) < 1e-12:
-      break
-    G = G1
-    if i == max_iter - 1:
-      print("Warning: no convegence after ", max_iter, "iterations")
-  f = (-1/np.pi) * np.imag(G[0, 0])
-  #plt.plot(diffs) #this is for diagnostic purposes
-  #plt.yscale("log")
-  return f
-
-#(4) creates a random Hermitian Gaussian matrix with approximately semicircle
-# distribution.
-def random_semicircle(size):
-  '''generate a random Hermitian Gaussian matrix of size n-by-n normalized by 1/sqrt(n),
-  where n = size'''
-  random_matrix = np.random.randn(size, size)
-  return (random_matrix + random_matrix.T)/( np.sqrt(2 * size))
-
-
-def Lambda(z, size, eps = 1E-6):
-  ''' Lambda_eps(z) needed to calculate the distribution of a polynomial
-  of free random variables.'''
-  A = eps * 1.j * np.eye(size)
-  A[0, 0] = z
-  return A
-
-def G_semicircle(z):
-    """
-    Computes the Cauchy transform of the semicircle distribution for a given complex number z,
-    ensuring that if z has a positive imaginary part, the output has a negative imaginary part,
-    and vice versa.
-
-    Parameters:
-        z (complex or array-like): The point(s) at which to evaluate the Cauchy transform.
-
-    Returns:
-        complex or ndarray: The value(s) of the Cauchy transform at z.
-    """
-    z = np.asarray(z, dtype=np.complex128)  # Ensure input is treated as complex
-
-    # Compute the discriminant
-    discriminant = np.sqrt(z**2 - 4)
-
-    # Ensure the output's imaginary part has the desired symmetry
-    discriminant = np.where(discriminant.imag * z.imag < 0, -discriminant, discriminant)
-
-    # Compute the Cauchy transform
-    G = (z - discriminant) / 2
-
-    return G
-
-
-def G_matrix_semicircle(w, B, rank):
-  ''' computes G(w) for the semicirle B \otimes x,
-  rank is the rank of matrix B '''
-  w = np.asarray(w, dtype=np.complex128)  # Ensure input is treated as complex
-  n = B.shape[0]
-  U1, d, U2t = la.svd(B)
-  U2 = np.conj(U2t.T)
-  #print("U1 =", U1)
-  #print(d)
-  #print("U2 =", U2)
-  #print("should be D: ", np.conj(U1.T) @ B @ U2) #
-  A_transf = np.conj(U1.T) @ w @ U2
-  #print("A_transf = ", A_transf)
-
-  A11 = A_transf[0:rank, 0:rank]
-  A12 = A_transf[0: rank, rank:n]
-  A21 = A_transf[rank:n, 0: rank]
-  A22 = A_transf[rank:n, rank:n]
-  D = np.diag(d[0:rank])
-  #print("D = ", D)
-  S = A11 - A12 @ la.inv(A22) @ A21
-  #print('S = ', S)
-  mu, V = la.eig(la.inv(D) @ S)
-  #print('mu =', mu)
-  #print(V)
-  #print('S = ', V @ np.diag(mu) @ la.inv(V))
-  #print("G(mu) = ", G_semicircle(mu))
-  M11 = V @ np.diag(G_semicircle(mu)) @ la.inv(V) @ la.inv(D)
-  #print('M11 = ', M11)
-  M = np.block([[M11, np.zeros((rank, n - rank))], [np.zeros((n - rank, rank)), la.inv(A22)]])
-  #print("M = ", M)
-  G = U2 @ (np.block([[np.eye(rank), np.zeros((rank, n - rank))], [-  la.inv(A22) @ A21 , np.eye(n - rank)]])
-       @ M  @ np.block([[np.eye(rank), -A12 @ la.inv(A22)], [np.zeros((n - rank, rank)), np.eye(n - rank)]]))  @ np.conj(U1.T)
-  return(G)
-
-def H_matrix_semicircle(w, B, rank):
-  ''' This is the h function: h = G(w)^{-1} - w$ '''
-  return(la.inv(G_matrix_semicircle(w, B, rank)) - w)
-
-
-def omega(b, AA, rank, max_iter = 10000):
-  ''' This computes subordination function for the sum of two semicircle variables.
-  AA = (A1, A2), rank is a (rank1, rank2), where rank1 is the rank of matrix A1,
-  and rank2 is the rank of matrix A2.
-  '''
-  W0 = 1.j * np.eye(n) #(initialization)
-  A1 = AA[0]
-  A2 = AA[1]
-  for i in range(max_iter):
-    W1 = H_matrix_semicircle(W0, A1, rank = rank[0]) + b
-    W2 = H_matrix_semicircle(W1, A2, rank = rank[1]) + b
-    if la.norm(W2 - W0) < 1e-12:
-      break
-    W0 = W2
-    if i == max_iter - 1:
-      print("Warning: no convergence after ", max_iter, "iterations")
-  return W0
-
-
-#(10) Cauchy transform of free Poisson
-def G_free_poisson(z, lambda_param):
-    """
-    Explicit formula for the Cauchy transform of the free Poisson distribution
-    with parameter λ.
-
-    Args:
-        z (complex): The point at which to evaluate the Cauchy transform.
-        lambda_param (float): The parameter λ of the free Poisson law.
-
-    Returns:
-        G (complex): The value of the Cauchy transform G(z).
-    """
-
-    z = np.asarray(z, dtype=np.complex128)  # Ensure input is treated as complex
-    # Compute the interval [a, b] of the support
-    a = (1 - np.sqrt(lambda_param))**2
-    #print(a)
-    b = (1 + np.sqrt(lambda_param))**2
-    #print(b)
-
-    # Compute the square root term with correct branch
-    sqrt_term = np.sqrt((z - a) * (z - b))
-    #sqrt_term = np.sqrt((1 + z - lambda_param)**2 - 4 * z) #alternative expression
-
-    sqrt_term = np.where(sqrt_term.imag * z.imag < 0, -sqrt_term, sqrt_term)
-
-    # Explicit formula for the Cauchy transform
-    G = (1 + z - lambda_param - sqrt_term) / (2 * z)
-    if lambda_param < 1: #in this case G also has an atom at 0 with weight (1 - lambda)
-      G = G + (1 - lambda_param)/z
-
-    return G
-
-
-# (11) Matrix version of the Cauchy transform for the free Poisson random variable.
-def G_matrix_fpoisson(w, B, rank, lambda_param):
-  ''' computes G(w) for the free Poisson r.v. B \otimes x,
-  rank is the rank of matrix B '''
-  w = np.asarray(w, dtype=np.complex128)  # Ensure input is treated as complex
-  n = B.shape[0]
-  U1, d, U2t = la.svd(B)
-  U2 = np.conj(U2t.T)
-  A_transf = np.conj(U1.T) @ w @ U2
-
-  A11 = A_transf[0:rank, 0:rank]
-  A12 = A_transf[0: rank, rank:n]
-  A21 = A_transf[rank:n, 0: rank]
-  A22 = A_transf[rank:n, rank:n]
-  D = np.diag(d[0:rank])
-  S = A11 - A12 @ la.inv(A22) @ A21
-  mu, V = la.eig(la.inv(D) @ S)
-  M11 = V @ np.diag(G_free_poisson(mu, lambda_param)) @ la.inv(V) @ la.inv(D)
-  M = np.block([[M11, np.zeros((rank, n - rank))], [np.zeros((n - rank, rank)), la.inv(A22)]])
-  G = U2 @ (np.block([[np.eye(rank), np.zeros((rank, n - rank))], [-  la.inv(A22) @ A21 , np.eye(n - rank)]])
-       @ M  @ np.block([[np.eye(rank), -A12 @ la.inv(A22)], [np.zeros((n - rank, rank)), np.eye(n - rank)]]))  @ np.conj(U1.T)
-  return(G)
-
-def H_matrix_fpoisson(w, B, rank, lambda_param):
-  ''' This is the h function: h = G(w)^{-1} - w$ '''
-  return(la.inv(G_matrix_fpoisson(w, B, rank, lambda_param)) - w)
-
-
-#(13) subordination function for the sum of two matrix random variables.
-def omega_sub(b, AA, rank, H1_name="H_matrix_semicircle", H2_name="H_matrix_semicircle",
-              H1_kwargs=None, H2_kwargs=None, max_iter=10000):
+    Calls ``matrix_semicircle_density(x, A, eps, G0, tol, maxiter, a0=a0)``.
     '''
-    Computes subordination function omega_1(b) for the sum of two free random variables variables.
+    return matrix_semicircle_density(x, A, eps=eps, G0=G0, tol=tol, maxiter=maxiter, a0=a0)
 
-    AA = (A1, A2), where A1 and A2 are matrices.
-    rank = (rank1, rank2), where rank1 is the rank of matrix A1, and rank2 is the rank of matrix A2.
-    H1_name, H2_name are string names of the functions to be applied.
-    H1_kwargs, H2_kwargs are dictionaries containing additional arguments for H1 and H2.
+
+def polynomial_density(
+    x: float,
+    a0: np.ndarray,
+    A,
+    *,
+    eps: float = 1e-2,
+    eps_reg: float | None = None,
+    block_size: int = 1,
+    G0: np.ndarray | None = None,
+    tol: float = 1e-10,
+    maxiter: int = 10_000,
+    return_info: bool = False,
+) -> float:
+    r'''
+    Scalar density of a self-adjoint polynomial $p(X_1,\dots,X_s)$ of free
+    semicircular variables, via self-adjoint linearization.
+
+    Evaluates at $z=x+i\,\varepsilon$ and computes the regularized fixed point
+    $G(z,b_\varepsilon(z))$ via :func:`cauchy_polynomial`.
+
+    The scalar Cauchy transform is extracted from the distinguished corner:
+    $$
+      m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
+          \big(G(z,b_\varepsilon(z))\big)_{11},
+    $$
+    and the density is approximated by
+    $$
+      f(x) \approx -\frac{1}{\pi}\,\Im\, m_p(x+i\varepsilon).
+    $$
+
+    Parameters
+    ----------
+    x : float
+        Real evaluation point.
+    a0 : (n,n) array
+        Constant term of the self-adjoint linearization.
+    A : sequence of (n,n) arrays or stacked array (s,n,n)
+        Coefficients defining $\eta(B)=\sum_i A_i B A_i^\ast$.
+    eps : float, default 1e-2
+        Imaginary offset in $z=x+i\,\varepsilon$.
+    eps_reg : float, optional
+        Regularization in $\Lambda_\varepsilon(z)$. If None, uses eps.
+    block_size : int, default 1
+        Size $k$ of the distinguished top-left block.
+    G0 : (n,n) array, optional
+        Warm start for the solver.
+    tol : float, default 1e-10
+        Relative tolerance.
+    maxiter : int, default 10000
+        Maximum iterations.
+    return_info : bool, default False
+        If True, also return solver diagnostics.
+
+    Returns
+    -------
+    float
+        Approximation to the density $f(x)$.
     '''
-    n = AA[0].shape[0]  # Assuming A1 and A2 are square matrices of the same size
-    W0 = 1.j * np.eye(n)  # Initialization
-    A1, A2 = AA
+    if eps <= 0:
+        raise ValueError("eps must be > 0.")
+    z = float(x) + 1j * float(eps)
+    if eps_reg is None:
+        eps_reg = float(eps)
 
-    # Get function references from globals()
-    H1 = globals()[H1_name]
-    H2 = globals()[H2_name]
+    G, info = cauchy_polynomial(
+        z, a0, A,
+        eps_reg=eps_reg, block_size=block_size,
+        G0=G0, tol=tol, maxiter=maxiter,
+        return_info=True,
+    )
 
-    # Initialize kwargs dictionaries if None
-    if H1_kwargs is None:
-        H1_kwargs = {}
-    if H2_kwargs is None:
-        H2_kwargs = {}
+    k = int(block_size)
+    G11 = G[:k, :k]
+    m = np.trace(G11) / k
+    f = (-1.0 / np.pi) * np.imag(m)
 
-    for i in range(max_iter):
-        W1 = H1(W0, A1, rank=rank[0], **H1_kwargs) + b
-        W2 = H2(W1, A2, rank=rank[1], **H2_kwargs) + b
+    if return_info:
+        info = dict(info)
+        info["z"] = z
+        info["m"] = complex(m)
+        info["density"] = float(f)
+        return float(f), info
 
-        if la.norm(W2 - W0) < 1e-12:
-            break
-        W0 = W2
-
-        if i == max_iter - 1:
-            print("Warning: no convergence after", max_iter, "iterations")
-
-    return W0
-
-#(14) generator of a free Poisson matrix
-def random_fpoisson(size, lam):
-  '''generate a random Hermitian matrix of size n-by-n, where n = size, that have the free Poisson
-  distribution with parameter lambda.
-  '''
-  random_matrix = np.random.randn(size, int(np.floor(size * lam)))
-  return (random_matrix @ random_matrix.T) /size
+    return float(f)
 
 
-#(15) random orthogonal matrix
-def random_orthogonal(n):
-    # Step 1: Generate a random n x n matrix A
-    A = np.random.randn(n, n)
+# ═══════════════════════════════════════════════════════════════════════════
+# Scalar (classical) helpers
+# ═══════════════════════════════════════════════════════════════════════════
 
-    # Step 2: Perform QR decomposition on A
-    Q, R = np.linalg.qr(A)
+def semicircle_density_scalar(x, c: float = 1.0):
+    r'''
+    Classical (scalar) Wigner semicircle density with variance $c>0$.
 
-    # Q is the orthogonal matrix we want
-    return Q
+    $$
+      f(x) \;=\; \frac{1}{2\pi c}\,\sqrt{\,4c - x^2\,}\,
+      \mathbf 1_{\{|x|\le 2\sqrt{c}\}}.
+    $$
 
+    Parameters
+    ----------
+    x : float or array_like
+    c : float, default 1.0
+        Variance parameter ($c>0$, so radius is $2\sqrt{c}$).
 
-
-# (16) This is a function that calculates the matrix Cauchy transform, provided that
-#the scalar Cauchy transform is known.
-def G_matrix_custom(w, B, rank, G_name="G_semicircle", G_kwargs=None):
-  ''' computes G(w) for the r.v. B \otimes x, where x has a custom measure mu_x above,
-  with the scalar Cauchy transform function $G_name$, and
-  rank is the rank of matrix B '''
-
-  # Get function references from globals()
-  G = globals()[G_name]
-
-  # Initialize kwargs dictionaries if None
-  if G_kwargs is None:
-    G_kwargs = {}
-
-
-  w = np.asarray(w, dtype=np.complex128)  # Ensure input is treated as complex
-  n = B.shape[0]
-  U1, d, U2t = la.svd(B)
-  U2 = np.conj(U2t.T)
-  A_transf = np.conj(U1.T) @ w @ U2
-
-  A11 = A_transf[0:rank, 0:rank]
-  A12 = A_transf[0: rank, rank:n]
-  A21 = A_transf[rank:n, 0: rank]
-  A22 = A_transf[rank:n, rank:n]
-  D = np.diag(d[0:rank])
-  S = A11 - A12 @ la.inv(A22) @ A21
-  mu, V = la.eig(la.inv(D) @ S)
-  M11 = V @ np.diag(G(mu, **G_kwargs)) @ la.inv(V) @ la.inv(D)
-  M = np.block([[M11, np.zeros((rank, n - rank))], [np.zeros((n - rank, rank)), la.inv(A22)]])
-  G = U2 @ (np.block([[np.eye(rank), np.zeros((rank, n - rank))], [-  la.inv(A22) @ A21 , np.eye(n - rank)]])
-       @ M  @ np.block([[np.eye(rank), -A12 @ la.inv(A22)], [np.zeros((n - rank, rank)), np.eye(n - rank)]]))  @ np.conj(U1.T)
-  return(G)
-
-# (17) The H-function that corresponds to G_matrix_custom
-def H_matrix_custom(w, B, rank, G_name="G_semicircle", G_kwargs=None):
-  ''' This is the h function: h = G(w)^{-1} - w$ '''
-  return(la.inv(G_matrix_custom(w, B, rank, G_name, G_kwargs)) - w)
+    Returns
+    -------
+    float or ndarray
+    '''
+    if c <= 0:
+        raise ValueError("c must be > 0")
+    x_arr = np.asarray(x, dtype=float)
+    inside = 4.0 * c - x_arr**2
+    y = np.where(inside > 0.0, (1.0 / (2.0 * np.pi * c)) * np.sqrt(inside), 0.0)
+    return y if x_arr.ndim else float(y)
 
 
-#(18) The scalar Cauchy transform of an arbitrary discrete distribution
-def cauchy_transform_discrete(z, points, weights):
+def semicircle_cauchy_scalar(z, c: float = 1.0):
+    r"""
+    Scalar Cauchy (Stieltjes) transform of the Wigner semicircle law
+    with variance $c>0$.
+
+    $$G(z) = \frac{z - \sqrt{z^2 - 4c}}{2c}$$
+
+    The square-root branch is chosen so that $\Im z>0 \Rightarrow \Im G(z)<0$.
     """
-    Computes the Cauchy transform G_mu(z) for a measure defined by
-    discrete points and their corresponding weights.
+    if c <= 0:
+        raise ValueError("c must be > 0")
 
-    Parameters:
-    z : complex or array-like
-        Evaluation point(s) in the complex plane.
-    points : list or array-like
-        Locations of the discrete measure.
-    weights : list or array-like
-        Corresponding weights of the measure.
+    z_arr = np.asarray(z, dtype=np.complex128)
+    disc = np.sqrt(z_arr**2 - 4.0 * c)
+    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
+
+    G = (z_arr - disc) / (2.0 * c)
+    return G if z_arr.ndim else complex(G)
+
+
+def free_poisson_cauchy_scalar(z, lam: float = 1.0):
+    r"""
+    Scalar Cauchy (Stieltjes) transform of the free Poisson (Marchenko--Pastur)
+    law with rate $\lambda>0$ and unit jump size.
+
+    With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+    $$
+      G(z) \;=\; \frac{\,1 + z - \lambda - \sqrt{(z-a)(z-b)}\,}{2z}.
+    $$
+    For $\lambda<1$ the law has an atom of mass $1-\lambda$ at the origin; this
+    formula already accounts for it (the principal branch produces a simple pole
+    at $z=0$ with residue $1-\lambda$), so **no** extra term is added.
+
+    The square-root branch is chosen so that
+    $\Im z>0 \Rightarrow \Im G(z)<0$, i.e. $G$ maps the upper half-plane to the
+    lower half-plane.
+
+    Parameters
+    ----------
+    z : complex or array_like
+        Point(s) at which to evaluate the transform.
+    lam : float, default 1.0
+        Rate parameter $\lambda>0$.
+
+    Returns
+    -------
+    complex or ndarray
+        The value(s) $G(z)$.
+
+    See Also
+    --------
+    free_poisson_density_scalar : The corresponding (a.c.) density.
+    semicircle_cauchy_scalar : Scalar Cauchy transform of the semicircle law.
+
+    Examples
+    --------
+    Use as the scalar law in a Kronecker / subordination computation:
+
+    >>> import numpy as np
+    >>> from functools import partial
+    >>> from free_matrix_laws import cauchy_kronecker, free_poisson_cauchy_scalar
+    >>> Gp = partial(free_poisson_cauchy_scalar, lam=4.0)
+    >>> w = (5.0 + 0.05j) * np.eye(3)
+    >>> a = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]], dtype=float)
+    >>> G = cauchy_kronecker(w, a, cauchy_scalar=Gp)
+    >>> G.shape
+    (3, 3)
     """
-    z = np.asarray(z)[:, np.newaxis]  # Ensure z is a column vector
-    points = np.asarray(points)
-    weights = np.asarray(weights)
-    return np.sum(weights / (z - points), axis=1)
+    if lam <= 0:
+        raise ValueError("lam must be > 0")
+    z_arr = np.asarray(z, dtype=np.complex128)
+    a = (1.0 - np.sqrt(lam))**2
+    b = (1.0 + np.sqrt(lam))**2
+    disc = np.sqrt((z_arr - a) * (z_arr - b))
+    disc = np.where(disc.imag * z_arr.imag < 0, -disc, disc)
+    # The principal branch already encodes the atom of mass (1 - lam) at 0
+    # when lam < 1 (simple pole at z = 0), so no extra term is needed.
+    G = (1.0 + z_arr - lam - disc) / (2.0 * z_arr)
+    return G if z_arr.ndim else complex(G)
 
 
+def free_poisson_density_scalar(x, lam: float = 1.0):
+    r"""
+    Absolutely continuous part of the free Poisson (Marchenko--Pastur) density
+    with rate $\lambda>0$ and unit jump size.
 
-# Define the matrix-valued function
-def matrix_function(z, w, b):
-    """Matrix-valued function of a complex variable z."""
-    return -(1/np.pi) * la.inv(w - z * b) * np.imag(G_semicircle(z))
+    With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+    $$
+      f(x) \;=\; \frac{\sqrt{(b-x)(x-a)}}{2\pi x}\,
+      \mathbf 1_{\{a \le x \le b\}}.
+    $$
+    For $\lambda<1$ the law additionally has an atom of mass $1-\lambda$ at the
+    origin, which is **not** represented by this density.
 
-# Perform the integration for each matrix entry
-def cauchy_matrix_semicircle_0(w, b):
-    w = np.asarray(w, dtype=np.complex128)  # Ensure input is treated as complex
-    matrix_size = matrix_function(0, w, b).shape  # Get the shape of the matrix
-    result = np.zeros(matrix_size, dtype=complex)  # Initialize result matrix
-    for i in range(matrix_size[0]):
-        for j in range(matrix_size[1]):
-            # Define the scalar function for the (i, j)-th entry
-            def scalar_function(x, w, b):
-                z = shifted_path(x)
-                return matrix_function(z, w, b)[i, j]
+    Parameters
+    ----------
+    x : float or array_like
+        Point(s) at which to evaluate the density.
+    lam : float, default 1.0
+        Rate parameter $\lambda>0$.
 
-            scalar_func_with_params = partial(scalar_function, w = w, b = b)
-            # Perform the numerical integration
-            integral_real, _ = quad(lambda x: scalar_func_with_params(x).real, al, au)
-            integral_imag, _ = quad(lambda x: scalar_func_with_params(x).imag, al, au)
-            result[i, j] = integral_real + 1j * integral_imag  # Save the result
-    return result
+    Returns
+    -------
+    float or ndarray
 
-def H_matrix_semicircle_0(w, A1, eps = 1E-8):
-  ''' This is the h function: h = G(w)^{-1} - w$ '''
-  return(la.inv(cauchy_matrix_semicircle_0(w, A1)) - w)
-
-
-
-def cauchy_matrix_semicircle_1(w, A1, eps = 1E-8):
-  ''' This is function that computes the Cauchy transform of $A1 \otimes X$, where
-  X is the standard semicirlce and A1 is an $n\times n$ matrix. The argument is w,
-  so we calculate E(w - A1 \otimes X)^{-1}. The parameter eps is for regularization to handle
-  the case when A1 is not inverible.'''
-  n = A1.shape[0]
-  mu, V = la.eig(la.inv(A1 + 1.j * eps * np.eye(n)) @ w)
-  return V @ np.diag(G_semicircle(mu)) @ la.inv(V) @ la.inv(A1 + 1.j * eps * np.eye(n))
-
-def H_matrix_semicircle_1(w, A1, eps = 1E-8):
-  ''' This is the h function: h = G(w)^{-1} - w$ '''
-  return(la.inv(Cauchy_matrix_semicircle_1(w, A1, eps)) - w)
-
-
-
-def Lambda(z, size, eps = 1E-6):
-  A = eps * 1.j * np.eye(size)
-  A[0, 0] = z
-  return A
-
-def get_density_anticommutator(x, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  Gxy = G_matrix_semicircle(omega(B, AA, rank = (2, 2)), A1, rank = 2)
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
-
-
-
-def get_density_anticommutator_fpoisson(x, lambda_param, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  om = omega_sub(B, (A1, A2), rank = (2,2), H1_name = "H_matrix_fpoisson",
-                   H2_name = "H_matrix_fpoisson",
-                   H1_kwargs={"lambda_param":lambda_param},
-                   H2_kwargs={"lambda_param":lambda_param})
-  Gxy = G_matrix_fpoisson(om, A1, rank = 2, lambda_param = lambda_param)
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
-
-
-
-def get_density_anticommutator_S_FP(x, lambda_param, eps = 0.01):
-  '''calculates the density of the anticommutator of a semicircle and
-  a free poisson r.v. with parameter lambda_param'''
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  om = omega_sub(B, (A1, A2), rank = (2,2), H1_name = "H_matrix_semicircle",
-                   H2_name = "H_matrix_fpoisson",
-                   H1_kwargs={},
-                   H2_kwargs={"lambda_param":lambda_param})
-  Gxy = G_matrix_semicircle(om, A1, rank = 2)
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
-
-
-def get_density_anticommutator_deform(x, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 1/2], [1, 0, 0], [1/2, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  Gxy = G_matrix_semicircle(omega(B, AA, rank = (2, 2)), A1, rank = 2)
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
-
-
-def get_density_anticommutator_deform_SFP(x, lambda_param, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 1/2], [1, 0, 0], [1/2, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  om = omega_sub(B, (A1, A2), rank = (2,2), H1_name = "H_matrix_semicircle",
-                   H2_name = "H_matrix_fpoisson",
-                   H1_kwargs={},
-                   H2_kwargs={"lambda_param":lambda_param})
-  Gxy = G_matrix_semicircle(om, A1, rank = 2)
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
-
-
-
-def cauchy_transform_custom(z):
+    See Also
+    --------
+    free_poisson_cauchy_scalar : The corresponding Cauchy transform.
+    semicircle_density_scalar : Density of the semicircle law.
     """
-    Computes the Cauchy transform G_mu(z) of the measure
-    mu_X = (1/4)(2δ_{-2} + δ_{-1} + δ_{+1})
-    """
-    return (1/4) * (2 / (z + 2) + 1 / (z + 1) + 1 / (z - 1))
-
-def get_density_anticommutator_deform_custom(x, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 1/2], [1, 0, 0], [1/2, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  om = omega_sub(B, (A1, A2), rank = (2,2), H1_name = "H_matrix_custom",
-                   H2_name = "H_matrix_semicircle",
-                   H1_kwargs={"G_name":"cauchy_transform_custom"},
-                   H2_kwargs={})
-  Gxy = G_matrix_custom(om, A1, rank = 2, G_name="cauchy_transform_custom")
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
+    if lam <= 0:
+        raise ValueError("lam must be > 0")
+    x_arr = np.asarray(x, dtype=float)
+    a = (1.0 - np.sqrt(lam))**2
+    b = (1.0 + np.sqrt(lam))**2
+    inside = (b - x_arr) * (x_arr - a)
+    in_support = (x_arr > a) & (x_arr < b)
+    # Safe denominator so the masked-out x=0 (when lam=1, a=0) never divides by 0.
+    denom = np.where(in_support, 2.0 * np.pi * x_arr, 1.0)
+    y = np.where(in_support, np.sqrt(np.maximum(inside, 0.0)) / denom, 0.0)
+    return y if x_arr.ndim else float(y)
 
 
-def get_density_anticommutator_deform_custom2(x, eps = 0.01):
-  A0 = np.array([[0, 0, 0], [0, 0, -1], [0, -1, 0]])
-  A1 = np.array([[0, 1, 1/2], [1, 0, 0], [1/2, 0, 0]])
-  A2 = np.array([[0, 0, 1], [0, 0, 0], [1, 0, 0]])
-  AA = (A1, A2)
-  n = A0.shape[0]
-  z = x + eps * 1j
-  B = Lambda(z, n) - A0
-  om = omega_sub(B, (A1, A2), rank = (2,2), H1_name = "H_matrix_custom",
-                   H2_name = "H_matrix_custom",
-                   H1_kwargs={"G_name":"cauchy_transform_discrete",
-                              "G_kwargs":{"points":np.array([-2, -1, 1]), "weights": np.array([2/4, 1/4, 1/4])}},
-                   H2_kwargs={"G_name":"cauchy_transform_discrete",
-                              "G_kwargs":{"points":np.array([1, 3]), "weights": np.array([1/2, 1/2])}})
-  Gxy = G_matrix_custom(om, A1, rank = 2, G_name="cauchy_transform_discrete",
-                        G_kwargs={"points":np.array([-2, -1, 1]), "weights": np.array([2/4, 1/4, 1/4])})
-  f = (-1/np.pi) * Gxy[0,0].imag
-  return f
+# ═══════════════════════════════════════════════════════════════════════════
+# Utilities: Λ_ε(z) and internal linearization step
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.ndarray:
+    r'''Build $\Lambda_\varepsilon(z)$ (internal, see :func:`lambda_eps`).'''
+    if n <= 0:
+        raise ValueError("n must be positive.")
+    if not (1 <= block_size <= n):
+        raise ValueError(f"block_size must be in {{1,...,n}}; got {block_size}.")
+    if eps_reg <= 0:
+        raise ValueError("eps_reg must be > 0.")
+
+    Lam = (1j * float(eps_reg)) * np.eye(n, dtype=complex)
+    Lam[:block_size, :block_size] = complex(z) * np.eye(block_size, dtype=complex)
+    return Lam
+
+
+def lambda_eps(z: complex, n: int, eps: float = 1e-6, block_size: int = 1) -> np.ndarray:
+    r'''
+    Regularized spectral parameter for polynomial linearizations.
+
+    $$
+      \Lambda_\varepsilon(z)
+      =
+      \begin{bmatrix}
+        z\, I_{k} & 0 \\
+        0 & i\varepsilon\, I_{n-k}
+      \end{bmatrix},
+    \qquad k = \texttt{block\_size}.
+    $$
+
+    Parameters
+    ----------
+    z : complex
+        Spectral parameter.
+    n : int
+        Matrix size.
+    eps : float, default ``1e-6``
+        Regularization $\varepsilon > 0$ on the lower block.
+    block_size : int, default ``1``
+        Size $k$ of the top-left block carrying $z$.
+
+    Returns
+    -------
+    (n, n) ndarray, complex
+    '''
+    return _lambda_eps(z, n, eps_reg=eps, block_size=block_size)
+
+
+def _hfsc_map(
+    G: np.ndarray, z: complex, a0: np.ndarray, A,
+    eps_reg: float, block_size: int = 1,
+) -> np.ndarray:
+    r'''
+    One HFSC half-averaged step for the linearized polynomial problem.
+
+    $$
+      G \mapsto \frac12\Big[G + W\Big],
+      \qquad
+      W := \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z),
+    $$
+    where $b_\varepsilon(z) = z(\Lambda_\varepsilon(z) - a_0)^{-1}$.
+
+    This is a low-level routine used by :func:`cauchy_polynomial`.
+    '''
+    G = np.asarray(G)
+    a0 = np.asarray(a0)
+    if G.ndim != 2 or G.shape[0] != G.shape[1]:
+        raise ValueError(f"G must be square; got {G.shape!r}")
+    if a0.shape != G.shape:
+        raise ValueError(f"a0 must have shape {G.shape!r}; got {a0.shape!r}")
+
+    n = G.shape[0]
+    I = np.eye(n, dtype=complex)
+    Lam = _lambda_eps(z, n, eps_reg=eps_reg, block_size=block_size)
+    b = complex(z) * la.solve(Lam - a0, I)
+    M = complex(z) * I - b @ eta(G, A)
+    W = la.solve(M, b)
+    return 0.5 * (G + W)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Deprecated aliases (v0.0.1 → v0.1.0)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _deprecated_alias(old_name, new_name, new_func):
+    """Create a wrapper that emits a DeprecationWarning then delegates."""
+    def wrapper(*args, **kwargs):
+        warnings.warn(
+            f"'{old_name}' is deprecated since v0.1.0; "
+            f"use '{new_name}' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return new_func(*args, **kwargs)
+    wrapper.__name__ = old_name
+    wrapper.__qualname__ = old_name
+    wrapper.__doc__ = (
+        f".. deprecated:: 0.1.0\n   Use :func:`{new_name}` instead."
+    )
+    return wrapper
+
+
+solve_cauchy_semicircle = _deprecated_alias(
+    "solve_cauchy_semicircle", "cauchy_matrix_semicircle", cauchy_matrix_semicircle)
+
+solve_G = _deprecated_alias(
+    "solve_G", "cauchy_matrix_semicircle", cauchy_matrix_semicircle)
+
+semicircle_density = _deprecated_alias(
+    "semicircle_density", "matrix_semicircle_density", matrix_semicircle_density)
+
+get_density = _deprecated_alias(
+    "get_density", "matrix_semicircle_density", matrix_semicircle_density)
+
+solve_cauchy_biased = _deprecated_alias(
+    "solve_cauchy_biased", "cauchy_biased_matrix_semicircle", cauchy_biased_matrix_semicircle)
+
+biased_semicircle_density = _deprecated_alias(
+    "biased_semicircle_density", "biased_matrix_semicircle_density", biased_matrix_semicircle_density)
+
+solve_cauchy_linearized = _deprecated_alias(
+    "solve_cauchy_linearized", "cauchy_polynomial", cauchy_polynomial)
+
+polynomial_semicircle_density = _deprecated_alias(
+    "polynomial_semicircle_density", "polynomial_density", polynomial_density)
+
+hfsb_map = _deprecated_alias(
+    "hfsb_map", "_hfsb_map (now private)", _hfsb_map)

@@ -32,6 +32,7 @@ nav:
     - Biased semicircle density: howto/biased_semicircle_density.md
     - Polynomial semicircle (linearization): howto/polynomial_semicircle.md
     - Anticommutator via subordination: howto/anticommutator_subordination.md
+    - Fuglede–Kadison determinant: howto/fuglede_kadison_determinant.md
     - CP Sinkhorn (symmetric OSI): howto/cp_sinkhorn.md
     - Singularity analysis at zero: howto/singularity.md
     - Quadrature-based Cauchy transform: howto/quadrature.md

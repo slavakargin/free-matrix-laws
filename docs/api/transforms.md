@@ -12,6 +12,7 @@
         - matrix_semicircle_density
         - biased_matrix_semicircle_density
         - polynomial_density
+        - biased_matrix_semicircle_logdet
         - semicircle_density_scalar
         - semicircle_cauchy_scalar
         - free_poisson_density_scalar
