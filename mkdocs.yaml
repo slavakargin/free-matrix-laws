@@ -22,6 +22,7 @@ nav:
     - Random Ensembles: api/ensembles.md
     - Quadrature (brute-force): api/quadrature.md
     - Singularity analysis: api/singularity.md
+    - Brown measure: api/brown.md
   - How-to: 
     - Overview: howto/index.md
     - Covariance map (η): howto/covariance_map.md
