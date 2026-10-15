@@ -41,6 +41,14 @@ from .transforms import (
 
 from .ensembles import random_semicircle
 
+from .brown import (
+    hermitize,
+    cauchy_hermitized_matrix_semicircle,
+    brown_log_potential,
+    brown_density,
+    brown_density_grid,
+)
+
 from .singularity import (
     solve_hms,
     singularity_report,
@@ -97,6 +105,12 @@ __all__ = [
     "singularity_report",
     # ensembles
     "random_semicircle",
+    # brown measure
+    "hermitize",
+    "cauchy_hermitized_matrix_semicircle",
+    "brown_log_potential",
+    "brown_density",
+    "brown_density_grid",
     # quadrature
     "cauchy_matrix_semicircle_bruteforce",
     "h_matrix_semicircle_bruteforce",
