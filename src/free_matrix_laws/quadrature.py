@@ -19,19 +19,21 @@ adaptive Gauss--Kronrod quadrature (``scipy.integrate.quad``), with the
 integration contour shifted slightly into the upper half-plane
 ($x \mapsto x + i\varepsilon$) to regularize the pole on the real axis.
 
-The companion function :func:`h_matrix_semicircle_bruteforce` computes the
+The companion function [`h_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.h_matrix_semicircle_bruteforce] computes the
 subordination-style "h-function"
+
 $$
     h_b(w) \;=\; G_b(w)^{-1} - w,
 $$
+
 which is related to the $R$-transform in operator-valued free probability.
 
 .. note::
 
    This is a **brute-force** reference implementation.  For production
    use on large matrices or fine grids, prefer the fixed-point solvers
-   in :mod:`free_matrix_laws.transforms` (e.g.
-   :func:`~free_matrix_laws.transforms.solve_cauchy_semicircle`), which
+   in [`transforms`][free_matrix_laws.transforms] (e.g.
+   `solve_cauchy_semicircle`), which
    are typically orders of magnitude faster.  The quadrature approach is
    most useful for:
 
@@ -147,14 +149,16 @@ def cauchy_matrix_semicircle_bruteforce(
         $w = (\alpha + i\delta)\,I_n$ for some small $\delta > 0$.
     b : (n, n) array_like
         Deterministic coefficient matrix.
-    eps : float, default ``1e-3``
+    eps : float, default 1e-3
         Imaginary shift $\varepsilon > 0$ applied to the integration
         variable ($z = x + i\varepsilon$).  Controls regularization of the
         resolvent near the real axis.
-    x_min, x_max : float, defaults ``-4.0``, ``4.0``
-        Integration limits.  The semicircle density is supported on
+    x_min : float, default -4.0
+        Lower integration limit.  The semicircle density is supported on
         $[-2, 2]$, so any limits beyond that suffice; wider limits have
         negligible cost thanks to adaptive quadrature.
+    x_max : float, default 4.0
+        Upper integration limit.
     quad_opts : dict, optional
         Extra keyword arguments forwarded to ``scipy.integrate.quad``
         (e.g. ``{'limit': 100, 'epsabs': 1e-10}``).
@@ -181,10 +185,8 @@ def cauchy_matrix_semicircle_bruteforce(
 
     See Also
     --------
-    free_matrix_laws.transforms.solve_cauchy_semicircle :
-        Much faster fixed-point solver (preferred for production).
-    h_matrix_semicircle_bruteforce :
-        The companion "h-function" $h_b(w) = G_b(w)^{-1} - w$.
+    - [`cauchy_matrix_semicircle`][free_matrix_laws.transforms.cauchy_matrix_semicircle] — Much faster fixed-point solver (preferred for production).
+    - [`h_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.h_matrix_semicircle_bruteforce] — The companion "h-function" $h_b(w) = G_b(w)^{-1} - w$.
 
     Examples
     --------
@@ -247,11 +249,13 @@ def h_matrix_semicircle_bruteforce(
     Subordination "h-function" for the matrix semicircle via quadrature.
 
     Computes
+
     $$
         h_b(w) \;=\; G_b(w)^{-1} \;-\; w,
     $$
+
     where $G_b(w)$ is the matrix-valued Cauchy transform of $b \otimes X$
-    obtained by :func:`cauchy_matrix_semicircle_bruteforce`.
+    obtained by [`cauchy_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.cauchy_matrix_semicircle_bruteforce].
 
     Parameters
     ----------
@@ -259,11 +263,13 @@ def h_matrix_semicircle_bruteforce(
         Matrix spectral parameter.
     b : (n, n) array_like
         Deterministic coefficient matrix.
-    eps : float, default ``1e-3``
+    eps : float, default 1e-3
         Imaginary shift for regularization (passed to
-        :func:`cauchy_matrix_semicircle_bruteforce`).
-    x_min, x_max : float
-        Integration limits (passed through).
+        [`cauchy_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.cauchy_matrix_semicircle_bruteforce]).
+    x_min : float, default -4.0
+        Lower integration limit (passed through).
+    x_max : float, default 4.0
+        Upper integration limit (passed through).
     quad_opts : dict, optional
         Extra keywords for ``scipy.integrate.quad``.
 
@@ -274,7 +280,7 @@ def h_matrix_semicircle_bruteforce(
 
     See Also
     --------
-    cauchy_matrix_semicircle_bruteforce : The underlying Cauchy-transform computation.
+    - [`cauchy_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.cauchy_matrix_semicircle_bruteforce] — The underlying Cauchy-transform computation.
 
     Examples
     --------
@@ -298,10 +304,13 @@ def G_from_h(h: np.ndarray, w: np.ndarray) -> np.ndarray:
     Recover the Cauchy transform $G_b(w)$ from the h-function.
 
     Given the relation
+
     $$
         h_b(w) \;=\; G_b(w)^{-1} - w,
     $$
+
     this inverts it to obtain
+
     $$
         G_b(w) \;=\; \bigl(h_b(w) + w\bigr)^{-1}.
     $$
@@ -320,10 +329,8 @@ def G_from_h(h: np.ndarray, w: np.ndarray) -> np.ndarray:
 
     See Also
     --------
-    h_matrix_semicircle_bruteforce :
-        Computes $h_b(w)$ from $w$ and $b$ via quadrature.
-    cauchy_matrix_semicircle_bruteforce :
-        Computes $G_b(w)$ directly via quadrature.
+    - [`h_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.h_matrix_semicircle_bruteforce] — Computes $h_b(w)$ from $w$ and $b$ via quadrature.
+    - [`cauchy_matrix_semicircle_bruteforce`][free_matrix_laws.quadrature.cauchy_matrix_semicircle_bruteforce] — Computes $G_b(w)$ directly via quadrature.
 
     Examples
     --------
@@ -375,10 +382,12 @@ def density_scalar_quadrature(
         Real evaluation point.
     b : (n, n) array_like
         Deterministic coefficient matrix.
-    eps : float, default ``1e-3``
+    eps : float, default 1e-3
         Imaginary shift $\varepsilon > 0$.
-    x_min, x_max : float
-        Integration limits.
+    x_min : float, default -4.0
+        Lower integration limit.
+    x_max : float, default 4.0
+        Upper integration limit.
     quad_opts : dict, optional
         Extra keywords for ``scipy.integrate.quad``.
 

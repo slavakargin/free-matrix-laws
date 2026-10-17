@@ -1,18 +1,24 @@
 # How to normalize a CP map via symmetric OSI
 
 Given a CP map
+
 $$
 T(X)=\sum_{i=1}^s A_i X A_i^\ast,
 $$
+
 one symmetric OSI step forms
+
 $$
 c_1 = \big(T(I)\big)^{-1/2}, \qquad
 c_2 = \big(T^\ast(I)\big)^{-1/2},
 $$
+
 and produces scaled Kraus operators
+
 $$
 B_i = c_1 A_i c_2,
 $$
+
 so that $\mathcal S(T)(X)=\sum_i B_i X B_i^\ast$.
 Iterating this step often moves $T$ toward the **doubly stochastic** class ($T(I)=I$, $T^\ast(I)=I$).
 

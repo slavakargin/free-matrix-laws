@@ -3,9 +3,11 @@
 Given a matrix semicircular variable $S = \sum_i A_i \otimes s_i$, the scalar
 spectral density $f(x)$ may diverge at $x = 0$.  Near such a singularity the
 density behaves as
+
 $$
 f(x) \;\sim\; C\,|x|^{\alpha}, \qquad x \to 0,
 $$
+
 where $\alpha < 0$ (integrable cusp) or $\alpha = 0$ (logarithmic or
 non-singular).  The exponent $\alpha$ is a **Puiseux exponent** of the HMS
 subordination function $W(u)$ at $u = 0$: since
@@ -14,9 +16,11 @@ a divergence in $\operatorname{tr} W(u) \sim C\,u^{\alpha}$ translates directly
 to the density.
 
 `singularity_report` automates the detection: it solves the HMS equation
+
 $$
 \eta(W)\,W + u\,W = I
 $$
+
 on a fine geometric grid of $u$ values approaching zero, then estimates
 $\alpha$ by log–log regression.
 

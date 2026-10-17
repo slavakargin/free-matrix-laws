@@ -2,11 +2,13 @@
 
 We consider $S = a_0 + \sum_{i=1}^s A_i \otimes X_i$ with semicircular $X_i$ and covariance
 $\eta(B)=\sum_i A_i B A_i^\ast$. The Cauchy transform solves
+
 $$
 G(z) \;=\; (z I - a_0 - \eta(G(z)))^{-1}, \qquad \Im z>0.
 $$
 
 A numerically stable averaged iteration is
+
 $$
 b = z(z I - a_0)^{-1},\qquad
 G \leftarrow \tfrac12\Big[G + \big(z I - b\,\eta(G)\big)^{-1} b\Big].

@@ -104,10 +104,12 @@ def symmetric_sinkhorn_scale(A, eps=1e-12, return_factors=False, preserve_input_
     r'''
     One **symmetric OSI step**: given a CP map $T(X)=\sum_i A_i X A_i^\ast$,
     form
+
     $$
       c_1 := \big(T(I)\big)^{-1/4}, \qquad
       c_2 := \big(T^\ast(I)\big)^{-1/4},
     $$
+
     and return Kraus operators $B_i := c_1 A_i c_2$ for $\mathcal S(T)=S_{c_1,c_2}(T)$.
 
     Parameters
@@ -157,6 +159,7 @@ def symmetric_sinkhorn_apply(X, A, eps=1e-12):
     Given $T(X)=\sum_i A_i X A_i^\ast$ and
     $c_1=(T(I))^{-1/4}$, $c_2=(T^\ast(I))^{-1/4}$,
     this returns
+
     $$
       \mathcal S(T)(X) \;=\; \sum_i (c_1 A_i c_2)\, X \,(c_1 A_i c_2)^\ast.
     $$
@@ -225,9 +228,11 @@ def symmetric_osi(A, maxiter=50, tol=1e-10, eps=1e-12, return_history=False):
 def ds_distance(A):
     r'''
     Distance to doubly stochastic class
+
     $$
       \mathrm{DS}(T) \;=\; \|T(I)-I\|_F^2 \;+\; \|T^\ast(I)-I\|_F^2,
     $$
+
     for $T(X)=\sum_i A_i X A_i^\ast$ with Kraus $A_i$.
     '''
     A_stack, _ = _as_stack(A)

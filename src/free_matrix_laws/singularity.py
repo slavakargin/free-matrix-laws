@@ -2,20 +2,22 @@ r"""
 Singularity analysis for the HMS subordination function W(u).
 
 Given Kraus operators $A_1,\dots,A_r$, the HMS equation is
+
 $$
     \eta(W)\,W + u\,W = I, \qquad \Re\,u > 0,
 $$
+
 where $\eta(B) = \sum_i A_i B A_i^*$.  Near a singularity at $u=0$,
 the key spectral quantities—$\operatorname{tr} W(u)$, eigenvalues of $W(u)$,
 $\det W(u)$—follow Puiseux asymptotics $\sim C\,u^\alpha$.
 
 This module provides:
 
-* :func:`solve_hms` — Newton solver for the HMS equation at scalar $u$.
-* :func:`hms_sweep` — warm-started sweep over a geometric grid of $u$ values.
-* :func:`puiseux_exponent` — log-log regression estimate of the leading
+* [`solve_hms`][free_matrix_laws.singularity.solve_hms] — Newton solver for the HMS equation at scalar $u$.
+* `hms_sweep` — warm-started sweep over a geometric grid of $u$ values.
+* `puiseux_exponent` — log-log regression estimate of the leading
   Puiseux exponent from sweep data.
-* :func:`singularity_report` — one-call summary combining all of the above.
+* [`singularity_report`][free_matrix_laws.singularity.singularity_report] — one-call summary combining all of the above.
 """
 
 from __future__ import annotations
@@ -153,11 +155,11 @@ def hms_sweep(
         Max iterations per $u$.
     convergence_threshold : float
         Points with residual above this are flagged as not converged.
-    method : ``"hfs"`` or ``"newton"``
+    method : {"hfs", "newton"}
         ``"hfs"`` (default): Helton--Far--Speicher contraction via
-        :func:`~free_matrix_laws.cauchy_matrix_semicircle`.
+        [`cauchy_matrix_semicircle`][free_matrix_laws.transforms.cauchy_matrix_semicircle].
         Robust and guaranteed to converge, but slower per step.
-        ``"newton"``: Newton's method via :func:`solve_hms`.
+        ``"newton"``: Newton's method via [`solve_hms`][free_matrix_laws.singularity.solve_hms].
         Faster per step but may stall near singularities for
         large-norm $\eta$.
     progress : bool or int
@@ -368,8 +370,8 @@ def singularity_report(
         Grid size.
     tol : float
         Solver tolerance.
-    method : ``"hfs"`` or ``"newton"``
-        Solver to use; see :func:`hms_sweep`.
+    method : {"hfs", "newton"}
+        Solver to use; see `hms_sweep`.
     verbose : bool
         If True, print a summary table.
     progress : bool or int
@@ -381,7 +383,7 @@ def singularity_report(
     Returns
     -------
     dict with keys:
-        ``sweep`` : dict from :func:`hms_sweep`.
+        ``sweep`` : dict from `hms_sweep`.
         ``alpha_tr`` : float — exponent for $\operatorname{tr} W$.
         ``C_tr`` : float — prefactor for $\operatorname{tr} W$.
         ``R2_tr`` : float — $R^2$ of the fit for $\operatorname{tr} W$.

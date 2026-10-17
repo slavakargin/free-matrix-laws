@@ -40,11 +40,14 @@ semicircle_density(
 ## What it does
 
 For $z=x+i\varepsilon$ it solves
+
 $$
 z\,G \;=\; I \;+\; \eta(G)\,G, \qquad
 \eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast,\ \Im z>0,
 $$
+
 then returns
+
 $$
 f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right).
 $$
@@ -58,9 +61,11 @@ $$
 ## Scalar-reduction sanity check
 
 If all $A_i=\sigma I$, then $G(z)=g(z)I$ and the scalar semicircle Stieltjes transform is
+
 $$
 g(z)=\frac{z-\sqrt{z^{2}-4c}}{2c}, \qquad c=\sigma^{2}.
 $$
+
 The density matches the semicircle on $[-2\sqrt{c},\,2\sqrt{c}]$.
 
 > See also: [`biased_semicircle_density`](biased_semicircle_density.md).
