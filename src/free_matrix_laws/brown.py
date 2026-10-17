@@ -3,17 +3,21 @@ Brown measure of (biased) matrix-valued semicircular elements.
 
 For arbitrary $a_0,a_1,\dots,a_r\in M_m(\mathbb C)$ and free standard
 semicirculars $s_1,\dots,s_r$ let
+
 $$
     S \;=\; a_0\otimes 1 \;+\; \sum_{i=1}^r a_i\otimes s_i .
 $$
+
 The Brown measure $\mu_S$ is recovered from the logarithmic potential
 $\log\Delta(S-z)$ as $\mu_S=\frac1{2\pi}\nabla_z^2\log\Delta(S-z)$.  This
 module computes the $\varepsilon$-regularized versions
+
 $$
     L_\varepsilon(z)=\log\Delta(H_z-i\varepsilon),
     \qquad
     \rho_\varepsilon(z)=\frac1{2\pi}\nabla_z^2 L_\varepsilon(z),
 $$
+
 where $H_z=\begin{pmatrix}0&S-z\\ (S-z)^*&0\end{pmatrix}$ is the
 hermitization.  As $\varepsilon\downarrow0$, $L_\varepsilon\downarrow
 \log\Delta(S-z)$ and $\rho_\varepsilon\,dA\to\mu_S$ weakly.
@@ -22,6 +26,7 @@ Method
 ------
 With $G=G(z;i\varepsilon)\in M_{2m}(\mathbb C)$ the solution of the
 hermitized Dyson equation
+
 $$
     G^{-1}+\eta^{\mathrm h}(G)=i\varepsilon-A_0(z),
     \qquad
@@ -31,7 +36,9 @@ $$
     \quad
     A_i=\begin{pmatrix}0&a_i\\ a_i^*&0\end{pmatrix},
 $$
+
 one has the exact identities
+
 $$
     \partial_z L_\varepsilon=\tfrac12\operatorname{tr}_m G_{21},
     \qquad
@@ -41,6 +48,7 @@ $$
     (\mathrm{id}-\mathcal C_G\eta^{\mathrm h})\bigl[\partial_{\bar z}G\bigr]
       = -G\,E_{21}\,G ,
 $$
+
 where $\mathcal C_G(K)=GKG$ and $E_{21}$ is the block matrix with $I_m$
 in the lower-left corner.  The operator $\mathrm{id}-\mathcal C_G\eta^{\mathrm h}$
 is the Newton Jacobian of the Dyson equation (up to the factor
@@ -56,12 +64,12 @@ driven to machine precision.
 
 Public API
 ----------
-* :func:`hermitize` — build $A_0(z)$ and $(A_i)$ of size $2m$.
-* :func:`cauchy_hermitized_matrix_semicircle` — Newton solver for
+* [`hermitize`][free_matrix_laws.brown.hermitize] — build $A_0(z)$ and $(A_i)$ of size $2m$.
+* [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle] — Newton solver for
   $G(z;i\varepsilon)$.
-* :func:`brown_log_potential` — $L_\varepsilon(z)$.
-* :func:`brown_density` — $\rho_\varepsilon(z)$.
-* :func:`brown_density_grid` — $\rho_\varepsilon$ on a rectangular grid
+* [`brown_log_potential`][free_matrix_laws.brown.brown_log_potential] — $L_\varepsilon(z)$.
+* [`brown_density`][free_matrix_laws.brown.brown_density] — $\rho_\varepsilon(z)$.
+* [`brown_density_grid`][free_matrix_laws.brown.brown_density_grid] — $\rho_\varepsilon$ on a rectangular grid
   with warm starts.
 """
 from __future__ import annotations
@@ -91,15 +99,21 @@ def hermitize(z: complex, a0, a):
     Hermitize the data of $S=a_0\otimes1+\sum_ia_i\otimes s_i$ at the point $z$.
 
     Returns the Hermitian matrices
+
     $$
       A_0(z)=\begin{pmatrix}0&a_0-zI\\ a_0^*-\bar zI&0\end{pmatrix},
       \qquad
       A_i=\begin{pmatrix}0&a_i\\ a_i^*&0\end{pmatrix},
       \quad i=1,\dots,r,
     $$
+
     of size $2m$, so that
-    $H_z=\begin{pmatrix}0&S-z\\(S-z)^*&0\end{pmatrix}
-     =A_0(z)\otimes1+\sum_iA_i\otimes s_i$
+
+    $$
+      H_z=\begin{pmatrix}0&S-z\\(S-z)^*&0\end{pmatrix}
+         =A_0(z)\otimes1+\sum_iA_i\otimes s_i
+    $$
+
     is a self-adjoint matrix semicircle with mean $A_0(z)$ and covariance
     $\eta^{\mathrm h}(B)=\sum_iA_iBA_i$.
 
@@ -114,8 +128,10 @@ def hermitize(z: complex, a0, a):
 
     Returns
     -------
-    A0 : (2m,2m) ndarray, complex
-    A : (r,2m,2m) ndarray, complex
+    A0 : (2m,2m) ndarray
+        The complex Hermitian matrix $A_0(z)$.
+    A : (r,2m,2m) ndarray
+        The complex Hermitian matrices $A_1,\dots,A_r$, stacked.
     '''
     a0 = np.asarray(a0, dtype=complex)
     if a0.ndim != 2 or a0.shape[0] != a0.shape[1]:
@@ -177,9 +193,11 @@ def _dyson_newton(W: np.ndarray, A: np.ndarray, eta_mat: np.ndarray,
     r'''
     Newton iteration for the hermitized Dyson equation in its polynomial
     form
+
     $$
        \tilde F(G):=I+\eta(G)\,G-W\,G=0 ,
     $$
+
     which is equivalent to $G^{-1}+\eta(G)=W$ for invertible $G$ but has
     no inverse, hence a bounded Hessian and a much larger Newton basin.
     Returns ``(G, iters, residual, J)`` where ``residual`` is
@@ -198,10 +216,12 @@ def _dyson_newton(W: np.ndarray, A: np.ndarray, eta_mat: np.ndarray,
     and the line search stalls.  We therefore first try the plain step
     $G+\alpha H$ with at most two halvings, and if that fails we realize the
     same direction as a congruence,
+
     $$
        \Xi G+G\Xi=H\ \ \text{(Sylvester)},\qquad
        G_{\mathrm{new}}=e^{\alpha\Xi}\,G\,e^{\alpha\Xi},
     $$
+
     which follows the scaling orbits exactly.  Positivity of
     $-\operatorname{Im}G$ is not enforced along the way (outside the
     spectrum it is only $O(\varepsilon)$ and a guard blocks every useful
@@ -290,12 +310,15 @@ def cauchy_hermitized_matrix_semicircle(
     $S=a_0\otimes1+\sum_ia_i\otimes s_i$.
 
     Solves, by Newton's method,
+
     $$
       G^{-1}+\eta^{\mathrm h}(G)=i\varepsilon I_{2m}-A_0(z),
       \qquad -\operatorname{Im}G\succ0 ,
     $$
-    where $A_0(z)$ and $\eta^{\mathrm h}$ are built by :func:`hermitize`.
+
+    where $A_0(z)$ and $\eta^{\mathrm h}$ are built by [`hermitize`][free_matrix_laws.brown.hermitize].
     In block form,
+
     $$
       G(z;i\varepsilon)=
       \begin{pmatrix}
@@ -306,36 +329,56 @@ def cauchy_hermitized_matrix_semicircle(
       \end{pmatrix},
       \qquad X=S-z,
     $$
+
     with $\mathbb E=\mathrm{id}\otimes\tau$.  In particular
     $G_{12}=G_{21}^*$ and $\operatorname{tr}G_{11}=\operatorname{tr}G_{22}$.
 
     Parameters
     ----------
     z : complex
+        Point $z\in\mathbb C$ at which $S-z$ is hermitized.
     a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary, not necessarily Hermitian).
     a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
     eps : float, default 1e-4
         Regularization $\varepsilon>0$.
     G0 : (2m,2m) ndarray, optional
-        Warm start (e.g. the solution at a nearby $z$).  If given, the
-        damped warm-up iteration is skipped.
+        Warm start, e.g. the solution at a nearby $z$.  If it satisfies
+        $-\operatorname{Im}G_0\succ0$, the damped warm-up iteration is
+        skipped.
     tol : float, default 1e-13
-        Frobenius norm of the Dyson residual at which Newton stops.
+        Newton stops when the Frobenius norm of the residual
+        $I+\eta^{\mathrm h}(G)\,G-W\,G$, $W=i\varepsilon-A_0(z)$, is
+        below `tol`.
     maxiter : int, default 100
         Newton iteration cap.
     warmup : int, default 200
-        Number of damped fixed-point steps before Newton when ``G0`` is
-        ``None``.
+        Number of damped fixed-point steps before Newton when `G0` is
+        `None` (twenty times as many in the fallback).
     return_info : bool, default False
-        If True, also return a dict with keys ``iters``, ``residual`` and
-        ``jacobian`` (the $(2m)^2\times(2m)^2$ matrix
-        $-G^{-1}\otimes G^{-\mathsf T}+\eta^{\mathrm h}$ in row-major
+        If True, also return a dict with keys `iters`, `residual` and
+        `jacobian` (the $(2m)^2\times(2m)^2$ matrix of
+        $K\mapsto-G^{-1}KG^{-1}+\eta^{\mathrm h}(K)$ in row-major
         vectorization).
 
     Returns
     -------
-    G : (2m,2m) ndarray, complex
-    info : dict (only if ``return_info``)
+    G : (2m,2m) ndarray
+        The complex matrix $G(z;i\varepsilon)$.
+    info : dict
+        Returned only if `return_info` is True; see above.
+
+    Raises
+    ------
+    RuntimeError
+        If neither Newton nor the damped fallback produce a solution with
+        $-\operatorname{Im}G\succ0$.
+
+    Warns
+    -----
+    RuntimeWarning
+        If the final residual exceeds $10^{-8}$.
     '''
     if eps <= 0:
         raise ValueError("eps must be > 0")
@@ -393,14 +436,17 @@ def brown_log_potential(
 ) -> float:
     r'''
     Regularized logarithmic potential of the Brown measure,
+
     $$
       L_\varepsilon(z)=\log\Delta(H_z-i\varepsilon)
       =\tfrac12(\operatorname{tr}_m\otimes\tau)\log\bigl((S-z)^*(S-z)+\varepsilon^2\bigr),
     $$
+
     which decreases to $\log\Delta(S-z)=\int\log|w-z|\,d\mu_S(w)$ as
     $\varepsilon\downarrow0$.
 
     Computed from $G=G(z;i\varepsilon)$ by the closed determinant identity
+
     $$
       L_\varepsilon(z)=-\frac1{2m}\log|\det G|
         +\frac12\operatorname{Re}\operatorname{tr}_{2m}\bigl(G\,\eta^{\mathrm h}(G)\bigr).
@@ -408,12 +454,25 @@ def brown_log_potential(
 
     Parameters
     ----------
-    z, a0, a, eps, G0, tol, maxiter
-        As in :func:`cauchy_hermitized_matrix_semicircle`.
+    z : complex
+        Point in the complex plane.
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    eps : float, default 1e-4
+        Regularization $\varepsilon>0$.
+    G0 : (2m,2m) ndarray, optional
+        Warm start for the Dyson solver.
+    tol : float, default 1e-13
+        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].
+    maxiter : int, default 100
+        Newton iteration cap.
 
     Returns
     -------
     float
+        $L_\varepsilon(z)$.
     '''
     _, A = hermitize(z, a0, a)
     G = cauchy_hermitized_matrix_semicircle(z, a0, a, eps=eps, G0=G0,
@@ -460,8 +519,9 @@ def brown_density(
       (\mathrm{id}-\mathcal C_G\eta^{\mathrm h})\bigl[\partial_{\bar z}G\bigr]
         =-G\,E_{21}\,G,
     $$
+
     with $G=G(z;i\varepsilon)$ from
-    :func:`cauchy_hermitized_matrix_semicircle`.  The identity is exact for
+    [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].  The identity is exact for
     every $\varepsilon>0$; $\rho_\varepsilon\,dA$ converges weakly to the
     Brown measure as $\varepsilon\downarrow0$.  The density of the Brown
     measure typically jumps at the boundary of its support, and the
@@ -471,26 +531,33 @@ def brown_density(
     Parameters
     ----------
     z : complex
+        Point in the complex plane.
     a0 : (m,m) array_like
-        Mean matrix (arbitrary).
+        Mean matrix $a_0$ (arbitrary).
     a : sequence of (m,m) arrays or stacked (r,m,m) array
-        Coefficients (arbitrary; no self-adjointness assumed).
+        Coefficients $a_1,\dots,a_r$ (arbitrary; no self-adjointness
+        assumed).
     eps : float, default 1e-4
+        Regularization $\varepsilon>0$.
     G0 : (2m,2m) ndarray, optional
         Warm start for the Dyson solver.
-    tol, maxiter
-        Newton parameters; see :func:`cauchy_hermitized_matrix_semicircle`.
+    tol : float, default 1e-13
+        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].
+    maxiter : int, default 100
+        Newton iteration cap.
     return_info : bool, default False
-        If True, also return a dict with ``G`` (for warm-starting a
-        neighbouring point), ``dG_dzbar``, ``log_potential``,
-        ``residual`` and ``iters``.
+        If True, also return a dict with keys `G` (for warm-starting a
+        neighbouring point), `dG_dzbar`, `log_potential`, `residual`,
+        `iters` and `imag_part`.
 
     Returns
     -------
-    float
-        $\rho_\varepsilon(z)$.  The computed value is real up to round-off;
-        its imaginary part is discarded.
-    info : dict (only if ``return_info``)
+    rho : float
+        $\rho_\varepsilon(z)$.  The computed value is real up to
+        round-off; its imaginary part is discarded (and reported as
+        `imag_part` in `info`).
+    info : dict
+        Returned only if `return_info` is True; see above.
 
     Examples
     --------
@@ -540,18 +607,30 @@ def brown_density_grid(
 
     Parameters
     ----------
-    xs, ys : 1-D array_like
-        Real and imaginary coordinates.
-    a0, a, eps, tol, maxiter
-        As in :func:`brown_density`.
+    xs : 1-D array_like
+        Real parts $x_j$.
+    ys : 1-D array_like
+        Imaginary parts $y_k$.
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    eps : float, default 1e-4
+        Regularization $\varepsilon>0$.
+    tol : float, default 1e-13
+        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].
+    maxiter : int, default 100
+        Newton iteration cap.
     return_potential : bool, default False
         If True, also return $L_\varepsilon$ on the grid.
 
     Returns
     -------
     rho : (len(ys), len(xs)) ndarray
-        ``rho[k, j]`` is $\rho_\varepsilon(x_j+iy_k)$.
-    L : (len(ys), len(xs)) ndarray (only if ``return_potential``)
+        `rho[k, j]` is $\rho_\varepsilon(x_j+iy_k)$.
+    L : (len(ys), len(xs)) ndarray
+        $L_\varepsilon(x_j+iy_k)$; returned only if `return_potential`
+        is True.
     '''
     xs = np.asarray(xs, dtype=float)
     ys = np.asarray(ys, dtype=float)

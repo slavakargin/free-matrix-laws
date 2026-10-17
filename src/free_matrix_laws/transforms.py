@@ -5,49 +5,49 @@ Primary API (v0.1.0)
 ---------------------
 Cauchy transforms (matrix-valued):
 
-* :func:`cauchy_matrix_semicircle`
+* [`cauchy_matrix_semicircle`][free_matrix_laws.transforms.cauchy_matrix_semicircle]
   — $G(z)$ for $S = \sum_i A_i \otimes X_i$
-* :func:`cauchy_kronecker`
+* [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker]
   — $G_a(w) = E[(w - a \otimes X)^{-1}]$ for any scalar distribution (fast, $O(n^3)$)
-* :func:`cauchy_kronecker_semicircle`
+* [`cauchy_kronecker_semicircle`][free_matrix_laws.transforms.cauchy_kronecker_semicircle]
   — specialization to $X$ semicircular
-* :func:`cauchy_biased_matrix_semicircle`
+* [`cauchy_biased_matrix_semicircle`][free_matrix_laws.transforms.cauchy_biased_matrix_semicircle]
   — $G(z)$ for $S = a_0 + \sum_i A_i \otimes X_i$
-* :func:`cauchy_polynomial`
+* [`cauchy_polynomial`][free_matrix_laws.transforms.cauchy_polynomial]
   — $G(z)$ for a self-adjoint polynomial $p(X_1,\dots,X_s)$
   via linearization
 
 Scalar densities:
 
-* :func:`matrix_semicircle_density`
+* [`matrix_semicircle_density`][free_matrix_laws.transforms.matrix_semicircle_density]
   — density of $\sum_i A_i \otimes X_i$
-* :func:`biased_matrix_semicircle_density`
+* [`biased_matrix_semicircle_density`][free_matrix_laws.transforms.biased_matrix_semicircle_density]
   — density of $a_0 + \sum_i A_i \otimes X_i$
-* :func:`polynomial_density`
+* [`polynomial_density`][free_matrix_laws.transforms.polynomial_density]
   — density of $p(X_1,\dots,X_s)$
 
 Determinants:
 
-* :func:`biased_matrix_semicircle_logdet`
+* [`biased_matrix_semicircle_logdet`][free_matrix_laws.transforms.biased_matrix_semicircle_logdet]
   — log Fuglede--Kadison determinant of $a_0 + \sum_i A_i \otimes X_i$
   (alias ``bms_logdet``)
 
 Scalar (classical) helpers:
 
-* :func:`semicircle_density_scalar`
+* [`semicircle_density_scalar`][free_matrix_laws.transforms.semicircle_density_scalar]
   — Wigner semicircle density
-* :func:`semicircle_cauchy_scalar`
+* [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar]
   — scalar Cauchy transform of the semicircle law
-* :func:`free_poisson_density_scalar`
+* [`free_poisson_density_scalar`][free_matrix_laws.transforms.free_poisson_density_scalar]
   — free Poisson (Marchenko--Pastur) density
-* :func:`free_poisson_cauchy_scalar`
+* [`free_poisson_cauchy_scalar`][free_matrix_laws.transforms.free_poisson_cauchy_scalar]
   — scalar Cauchy transform of the free Poisson law
 
 Utilities:
 
-* :func:`subordination_kronecker`
+* [`subordination_kronecker`][free_matrix_laws.transforms.subordination_kronecker]
   — subordination function $\omega_1(b)$ for free additive convolution
-* :func:`lambda_eps` — regularized spectral parameter $\Lambda_\varepsilon(z)$
+* [`lambda_eps`][free_matrix_laws.transforms.lambda_eps] — regularized spectral parameter $\Lambda_\varepsilon(z)$
 """
 from __future__ import annotations
 
@@ -68,12 +68,14 @@ def _hfs_map(G: np.ndarray, z: complex, A) -> np.ndarray:
     Half-averaged fixed-point step for the unbiased matrix semicircle.
 
     One step of the iteration
+
     $$
         T(G)\;=\;\tfrac12\Big( G \;+\; (\,zI - \eta(G)\,)^{-1}\Big),
     $$
+
     where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$.
 
-    This is a low-level building block for :func:`cauchy_matrix_semicircle`.
+    This is a low-level building block for [`cauchy_matrix_semicircle`][free_matrix_laws.transforms.cauchy_matrix_semicircle].
 
     Parameters
     ----------
@@ -128,16 +130,21 @@ def _hfsb_map(G: np.ndarray,
 
     For $S=a_0 + \sum_i A_i \otimes X_i$ with semicircular $X_i$ and covariance
     $\eta(B)=\sum_i A_i B A_i^\ast$, the Cauchy transform $G(z)$ solves
+
     $$
       G \;=\; (z I - a_0 - \eta(G))^{-1}
       \quad\Longleftrightarrow\quad
       (z I - a_0)\,G \;=\; I + \eta(G)\,G .
     $$
+
     Define $b := z\,(z I - a_0)^{-1}$ and the map
+
     $$
       \Phi(G) \;=\; [\,z I - b\,\eta(G)\,]^{-1} b ,
     $$
+
     then this routine returns the relaxed step
+
     $$
       G_{\text{new}} \;=\; (1-\text{relax})\,G \;+\; \text{relax}\,\Phi(G).
     $$
@@ -161,7 +168,7 @@ def _hfsb_map(G: np.ndarray,
 
     Notes
     -----
-    This is the core iteration step used by :func:`cauchy_biased_matrix_semicircle`.
+    This is the core iteration step used by [`cauchy_biased_matrix_semicircle`][free_matrix_laws.transforms.cauchy_biased_matrix_semicircle].
     The relaxation parameter controls damping: $\text{relax}=0.5$ corresponds to
     the half-averaged scheme of Helton--Rashidi Far--Speicher (IMRN 2007).
     '''
@@ -182,9 +189,13 @@ def cauchy_matrix_semicircle(z: complex, A, G0: np.ndarray | None = None,
     Matrix-valued Cauchy transform of the matrix semicircle $\sum_i A_i \otimes X_i$.
 
     Solves the operator-valued semicircle equation
+
     $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0, $$
+
     by fixed-point iteration using the half-averaged map
+
     $$ G \;\mapsto\; \tfrac12\Big[\,G + (\,zI - \eta(G)\,)^{-1}\Big], $$
+
     where $\eta(B)=\sum_{i=1}^s A_i B A_i^\ast$.
 
     This follows the numerical damping suggested by Helton--Rashidi Far--Speicher (IMRN 2007).
@@ -237,9 +248,11 @@ def cauchy_kronecker(
     Cauchy transform of a Kronecker-product random variable $a \otimes X$.
 
     Computes
+
     $$
       G_a(w) \;=\; E\!\big[(w - a \otimes X)^{-1}\big],
     $$
+
     where $X$ is a scalar random variable with known Cauchy (Stieltjes) transform
     $G_X(z)$, and $a$ is an $n \times n$ deterministic matrix.
 
@@ -247,10 +260,12 @@ def cauchy_kronecker(
     invertible, then diagonalize
     $\tilde a^{-1} w = V\,\mathrm{diag}(\mu_1,\dots,\mu_n)\,V^{-1}$.
     The expectation reduces to
+
     $$
       G_a(w) \;=\; V\,\mathrm{diag}\!\big(G_X(\mu_1),\dots,G_X(\mu_n)\big)\,
                     V^{-1}\,\tilde a^{-1},
     $$
+
     where $G_X$ is the scalar Cauchy transform passed as ``cauchy_scalar``.
 
     This is $O(n^3)$ (one eigendecomposition + two solves) regardless of
@@ -266,7 +281,7 @@ def cauchy_kronecker(
     cauchy_scalar : callable, optional
         Scalar Cauchy transform $G_X(z)$, accepting a complex array and
         returning a complex array of the same shape.
-        Default: :func:`semicircle_cauchy_scalar` (standard Wigner law).
+        Default: [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar] (standard Wigner law).
     eps : float, default 1e-8
         Regularization: replaces $a$ by $a + i\varepsilon I$ to handle
         singular or near-singular $a$.
@@ -278,12 +293,9 @@ def cauchy_kronecker(
 
     See Also
     --------
-    cauchy_kronecker_semicircle :
-        Convenience alias with ``cauchy_scalar=semicircle_cauchy_scalar``.
-    h_kronecker :
-        Subordination h-function for the same model.
-    cauchy_matrix_semicircle :
-        General case $\sum_i A_i \otimes X_i$ (fixed-point iteration).
+    - [`cauchy_kronecker_semicircle`][free_matrix_laws.transforms.cauchy_kronecker_semicircle] — Convenience alias with ``cauchy_scalar=semicircle_cauchy_scalar``.
+    - [`h_kronecker`][free_matrix_laws.transforms.h_kronecker] — Subordination h-function for the same model.
+    - [`cauchy_matrix_semicircle`][free_matrix_laws.transforms.cauchy_matrix_semicircle] — General case $\sum_i A_i \otimes X_i$ (fixed-point iteration).
 
     Examples
     --------
@@ -339,7 +351,8 @@ def h_kronecker(
     $$
       h_a(w) \;=\; G_a(w)^{-1} \;-\; w,
     $$
-    where $G_a(w)$ is computed by :func:`cauchy_kronecker`.
+
+    where $G_a(w)$ is computed by [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker].
 
     Parameters
     ----------
@@ -349,7 +362,7 @@ def h_kronecker(
         Deterministic matrix in $a \otimes X$.
     cauchy_scalar : callable, optional
         Scalar Cauchy transform $G_X(z)$.
-        Default: :func:`semicircle_cauchy_scalar`.
+        Default: [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar].
     eps : float, default 1e-8
         Regularization parameter.
 
@@ -359,10 +372,8 @@ def h_kronecker(
 
     See Also
     --------
-    h_kronecker_semicircle :
-        Convenience alias for the semicircle case.
-    cauchy_kronecker :
-        The underlying Cauchy transform.
+    - [`h_kronecker_semicircle`][free_matrix_laws.transforms.h_kronecker_semicircle] — Convenience alias for the semicircle case.
+    - [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker] — The underlying Cauchy transform.
     '''
     G = cauchy_kronecker(w, a, cauchy_scalar=cauchy_scalar, eps=eps)
     return la.inv(G) - w
@@ -379,7 +390,7 @@ def cauchy_kronecker_semicircle(
     Convenience alias for
     ``cauchy_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
 
-    See :func:`cauchy_kronecker` for full documentation.
+    See [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker] for full documentation.
 
     Parameters
     ----------
@@ -408,7 +419,7 @@ def h_kronecker_semicircle(
     Convenience alias for
     ``h_kronecker(w, a, cauchy_scalar=semicircle_cauchy_scalar, eps=eps)``.
 
-    See :func:`h_kronecker` for full documentation.
+    See [`h_kronecker`][free_matrix_laws.transforms.h_kronecker] for full documentation.
 
     Parameters
     ----------
@@ -442,15 +453,18 @@ def subordination_kronecker(
     of two Kronecker-product random variables $a_1 \otimes X$ and $a_2 \otimes Y$.
 
     Computes the fixed point of the map
+
     $$
       w \;\mapsto\; h_Y\!\big(h_X(w) + b\big) + b,
     $$
+
     where $h_X(w) = G_{a_1 \otimes X}(w)^{-1} - w$ and
     $h_Y(w) = G_{a_2 \otimes Y}(w)^{-1} - w$ are the subordination h-functions
-    computed via :func:`h_kronecker`.
+    computed via [`h_kronecker`][free_matrix_laws.transforms.h_kronecker].
 
     After convergence, the Cauchy transform of the sum $p(X,Y)$ (as encoded
     by the linearization $b = \Lambda_\varepsilon(z) - a_0$) can be recovered as
+
     $$
       G_{X+Y}(b) \;=\; G_{a_1 \otimes X}\!\big(\omega_1(b)\big).
     $$
@@ -466,13 +480,13 @@ def subordination_kronecker(
         Deterministic matrix for the second variable ($a_2 \otimes Y$).
     cauchy_scalar_x : callable, optional
         Scalar Cauchy transform $G_X(z)$ for the first variable.
-        Default: :func:`semicircle_cauchy_scalar`.
+        Default: [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar].
     cauchy_scalar_y : callable, optional
         Scalar Cauchy transform $G_Y(z)$ for the second variable.
-        Default: :func:`semicircle_cauchy_scalar`.
+        Default: [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar].
     eps : float, default 1e-4
         Regularization for the Kronecker h-functions. Larger than the
-        default in :func:`cauchy_kronecker` because linearization matrices
+        default in [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker] because linearization matrices
         $a_1, a_2$ are typically rank-deficient.
     tol : float, default 1e-8
         Convergence tolerance (Frobenius norm of $w_{k+1} - w_k$).
@@ -492,8 +506,8 @@ def subordination_kronecker(
 
     See Also
     --------
-    h_kronecker : The h-function used at each step.
-    cauchy_kronecker : To recover $G_{X+Y}(b)$ from $\omega_1(b)$.
+    - [`h_kronecker`][free_matrix_laws.transforms.h_kronecker] — The h-function used at each step.
+    - [`cauchy_kronecker`][free_matrix_laws.transforms.cauchy_kronecker] — To recover $G_{X+Y}(b)$ from $\omega_1(b)$.
 
     Examples
     --------
@@ -574,20 +588,25 @@ def cauchy_biased_matrix_semicircle(
     $S = a_0 + \sum_i A_i \otimes X_i$.
 
     Solves
+
     $$
       G \;=\; (z I - a_0 - \eta(G))^{-1},
       \qquad \Im z>0 ,
     $$
+
     via the relaxed iteration
+
     $$
       G_{k+1} \;=\; (1-\text{relax})\,G_k \;+\; \text{relax}\,[\,z I - b\,\eta(G_k)\,]^{-1} b,
       \quad b=z(z I - a_0)^{-1}.
     $$
 
     Convergence is checked via the residual
+
     $$
       R(G):= (z I - a_0)\,G - I - \eta(G)\,G,
     $$
+
     stopping when $\|R(G)\|_{\mathrm{F}} \le \text{tol}$.
 
     Parameters
@@ -654,16 +673,21 @@ def cauchy_polynomial(
     Cauchy transform of a self-adjoint polynomial $p(X_1,\dots,X_s)$ via linearization.
 
     Given a self-adjoint linearization
+
     $$
       L_p = a_0 + \sum_{i=1}^s A_i \otimes X_i,
     $$
+
     with semicircular $X_i$, we form
+
     $$
       b_\varepsilon(z) := z\big(\Lambda_\varepsilon(z)-a_0\big)^{-1},
       \qquad
       \eta(B) := \sum_{i=1}^s A_i\,B\,A_i^\ast,
     $$
+
     where
+
     $$
     \Lambda_\varepsilon(z)=\operatorname{diag}
         \big(z I_k,\ i\varepsilon\, I_{n-k}\big),
@@ -671,10 +695,12 @@ def cauchy_polynomial(
     $$
 
     The iteration uses the half-averaged update
+
     $$
       G_{new} = \frac12\Big[G + \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1}
                  b_\varepsilon(z)\Big],
     $$
+
     and stops when $\|G_{new}-G\|_F \le \text{tol}\,\|G\|_F$.
 
     Parameters
@@ -709,10 +735,12 @@ def cauchy_polynomial(
     -----
     After computing $G(z,b_\varepsilon(z))$, the scalar Cauchy transform of $p$
     is obtained from the distinguished corner via
+
     $$
       m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
           \big(G(z,b_\varepsilon(z))\big)_{11},
     $$
+
     with $k=\text{block\_size}$ and $(\cdot)_{11}$ the top-left $k\times k$ block.
     '''
     a0 = np.asarray(a0)
@@ -762,13 +790,16 @@ def matrix_semicircle_density(
     (optionally with bias $a_0$).
 
     Unbiased case ($a_0$ is ``None``): compute $G(z)$ for $z=x+i\varepsilon$ from
+
     $$ z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \eta(B)=\sum_{i=1}^s A_i B A_i^\ast, $$
+
     then return the scalar density
+
     $$ f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
        \mathrm{tr}\,G(x+i\varepsilon)\right). $$
 
     Biased case ($a_0 \ne 0$): compute $G_{a_0+X}(z)$ via
-    :func:`cauchy_biased_matrix_semicircle` and apply the same inversion.
+    [`cauchy_biased_matrix_semicircle`][free_matrix_laws.transforms.cauchy_biased_matrix_semicircle] and apply the same inversion.
 
     Parameters
     ----------
@@ -784,7 +815,7 @@ def matrix_semicircle_density(
         Relative fixed-point tolerance.
     maxiter : int, default 10000
         Maximum iterations.
-    a0 : (n,n) array or ``None``
+    a0 : (n,n) array or None
         Bias matrix. If provided, computes density for $a_0 + \sum_i A_i \otimes X_i$.
 
     Returns
@@ -835,6 +866,7 @@ def biased_matrix_semicircle_density(
     $S = a_0 + \sum_i A_i \otimes X_i$.
 
     Convenience wrapper:
+
     $$ f_{a_0}(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,
        \mathrm{tr}\,G_{a_0+X}(x+i\varepsilon)\right). $$
 
@@ -858,20 +890,25 @@ def biased_matrix_semicircle_logdet(
     semicircular elements and $A_i = A_i^\ast$.
 
     Returns
+
     $$
       \log\Delta(S - x)
       \;=\; \int_{\mathbb R} \log|t - x|\, d\mu_S(t),
     $$
+
     the log determinant with respect to $\mathrm{tr}_m \otimes \tau$
     ($\mathrm{tr}_m = \tfrac1m \mathrm{Tr}$, $m$ the size of $a_0$).
 
     **Method (closed formula).** Let $G = G(z)$ solve the matrix Dyson equation
+
     $$
       G^{-1} + \eta(G) = z I - a_0,
       \qquad \eta(B) = \sum_i A_i B A_i^\ast,
     $$
+
     at $z = x + i\varepsilon$ (obtained here from
-    :func:`cauchy_biased_matrix_semicircle`). Then
+    [`cauchy_biased_matrix_semicircle`][free_matrix_laws.transforms.cauchy_biased_matrix_semicircle]). Then
+
     $$
       \log\Delta(S - x)
       \;=\;
@@ -880,6 +917,7 @@ def biased_matrix_semicircle_logdet(
         + \frac12\, \mathrm{tr}_m\!\big(G\,\eta(G)\big)
       \right].
     $$
+
     Only the real part enters, so the branch of $\log\det G$ is irrelevant; the
     modulus form $-\tfrac1m\log|\det G|$ is used directly. The offset
     $\varepsilon>0$ regularizes the boundary value $G(x+i0)$; the result
@@ -910,8 +948,8 @@ def biased_matrix_semicircle_logdet(
 
     See Also
     --------
-    cauchy_biased_matrix_semicircle : Solver for the matrix Dyson equation.
-    biased_matrix_semicircle_density : Spectral density of the same object.
+    - [`cauchy_biased_matrix_semicircle`][free_matrix_laws.transforms.cauchy_biased_matrix_semicircle] — Solver for the matrix Dyson equation.
+    - [`biased_matrix_semicircle_density`][free_matrix_laws.transforms.biased_matrix_semicircle_density] — Spectral density of the same object.
 
     Examples
     --------
@@ -953,14 +991,17 @@ def polynomial_density(
     semicircular variables, via self-adjoint linearization.
 
     Evaluates at $z=x+i\,\varepsilon$ and computes the regularized fixed point
-    $G(z,b_\varepsilon(z))$ via :func:`cauchy_polynomial`.
+    $G(z,b_\varepsilon(z))$ via [`cauchy_polynomial`][free_matrix_laws.transforms.cauchy_polynomial].
 
     The scalar Cauchy transform is extracted from the distinguished corner:
+
     $$
       m_p(z) \approx \frac{1}{k}\,\mathrm{tr}\,
           \big(G(z,b_\varepsilon(z))\big)_{11},
     $$
+
     and the density is approximated by
+
     $$
       f(x) \approx -\frac{1}{\pi}\,\Im\, m_p(x+i\varepsilon).
     $$
@@ -1078,9 +1119,11 @@ def free_poisson_cauchy_scalar(z, lam: float = 1.0):
     law with rate $\lambda>0$ and unit jump size.
 
     With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+
     $$
       G(z) \;=\; \frac{\,1 + z - \lambda - \sqrt{(z-a)(z-b)}\,}{2z}.
     $$
+
     For $\lambda<1$ the law has an atom of mass $1-\lambda$ at the origin; this
     formula already accounts for it (the principal branch produces a simple pole
     at $z=0$ with residue $1-\lambda$), so **no** extra term is added.
@@ -1103,8 +1146,8 @@ def free_poisson_cauchy_scalar(z, lam: float = 1.0):
 
     See Also
     --------
-    free_poisson_density_scalar : The corresponding (a.c.) density.
-    semicircle_cauchy_scalar : Scalar Cauchy transform of the semicircle law.
+    - [`free_poisson_density_scalar`][free_matrix_laws.transforms.free_poisson_density_scalar] — The corresponding (a.c.) density.
+    - [`semicircle_cauchy_scalar`][free_matrix_laws.transforms.semicircle_cauchy_scalar] — Scalar Cauchy transform of the semicircle law.
 
     Examples
     --------
@@ -1139,10 +1182,12 @@ def free_poisson_density_scalar(x, lam: float = 1.0):
     with rate $\lambda>0$ and unit jump size.
 
     With support edges $a=(1-\sqrt\lambda)^2$ and $b=(1+\sqrt\lambda)^2$,
+
     $$
       f(x) \;=\; \frac{\sqrt{(b-x)(x-a)}}{2\pi x}\,
       \mathbf 1_{\{a \le x \le b\}}.
     $$
+
     For $\lambda<1$ the law additionally has an atom of mass $1-\lambda$ at the
     origin, which is **not** represented by this density.
 
@@ -1159,8 +1204,8 @@ def free_poisson_density_scalar(x, lam: float = 1.0):
 
     See Also
     --------
-    free_poisson_cauchy_scalar : The corresponding Cauchy transform.
-    semicircle_density_scalar : Density of the semicircle law.
+    - [`free_poisson_cauchy_scalar`][free_matrix_laws.transforms.free_poisson_cauchy_scalar] — The corresponding Cauchy transform.
+    - [`semicircle_density_scalar`][free_matrix_laws.transforms.semicircle_density_scalar] — Density of the semicircle law.
     """
     if lam <= 0:
         raise ValueError("lam must be > 0")
@@ -1180,7 +1225,7 @@ def free_poisson_density_scalar(x, lam: float = 1.0):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def _lambda_eps(z: complex, n: int, eps_reg: float, block_size: int = 1) -> np.ndarray:
-    r'''Build $\Lambda_\varepsilon(z)$ (internal, see :func:`lambda_eps`).'''
+    r'''Build $\Lambda_\varepsilon(z)$ (internal, see [`lambda_eps`][free_matrix_laws.transforms.lambda_eps]).'''
     if n <= 0:
         raise ValueError("n must be positive.")
     if not (1 <= block_size <= n):
@@ -1213,9 +1258,9 @@ def lambda_eps(z: complex, n: int, eps: float = 1e-6, block_size: int = 1) -> np
         Spectral parameter.
     n : int
         Matrix size.
-    eps : float, default ``1e-6``
+    eps : float, default 1e-6
         Regularization $\varepsilon > 0$ on the lower block.
-    block_size : int, default ``1``
+    block_size : int, default 1
         Size $k$ of the top-left block carrying $z$.
 
     Returns
@@ -1237,9 +1282,10 @@ def _hfsc_map(
       \qquad
       W := \big(zI - b_\varepsilon(z)\,\eta(G)\big)^{-1} b_\varepsilon(z),
     $$
+
     where $b_\varepsilon(z) = z(\Lambda_\varepsilon(z) - a_0)^{-1}$.
 
-    This is a low-level routine used by :func:`cauchy_polynomial`.
+    This is a low-level routine used by [`cauchy_polynomial`][free_matrix_laws.transforms.cauchy_polynomial].
     '''
     G = np.asarray(G)
     a0 = np.asarray(a0)

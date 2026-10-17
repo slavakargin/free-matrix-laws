@@ -1,6 +1,7 @@
 # Solving the operator-valued Cauchy transform $G(z)$
 
 This shows how to compute the matrix Cauchy transform $G(z)$ for the **matrix semicircle** via the fixed-point solver
+
 $$
 z\,G \;=\; I \;+\; \eta(G)\,G,\qquad \Im z>0,\quad
 \eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast.
@@ -30,6 +31,7 @@ print("residual:", res)
 ### Scalar reduction sanity check
 
 When all $A_i=\sigma I$, the solution is $G(z)=g(z),I$ with the scalar semicircle Stieltjes transform
+
 $$
 g(z)=\frac{z-\sqrt{z^2-4c}}{2c},\qquad c=\sigma^2.
 $$
@@ -60,10 +62,13 @@ print("||G - gI||:", err)
 ### From $G(z)$ to a scalar Stieltjes transform and density
 
 The scalar transform is
+
 $$
 m(z) = \frac{1}{n} \mathrm{tr} \, G(z).
 $$
+
 For $x\in\mathbb{R}$ with $z=x+i\varepsilon$,
+
 $$
 f(x) = -\frac{1}{\pi}\Im m(z).
 $$

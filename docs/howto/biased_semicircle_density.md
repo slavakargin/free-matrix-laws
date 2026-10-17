@@ -42,11 +42,14 @@ biased_semicircle_density(
 ## What it does
 
 For $z=x+i\varepsilon$ it computes the Cauchy transform $G_{a_0+X}(z)$ using the Helton–Rashidi Far–Speicher half-averaged step adapted to the bias:
+
 $$
 b \;=\; z\,(zI-a_0)^{-1},\qquad
 G \leftarrow \tfrac{1}{2}\Big[\,G + (zI - b\,\eta(G))^{-1} b\,\Big],
 $$
+
 then returns
+
 $$
 f(x) \;=\; -\frac{1}{\pi}\,\Im\!\left(\frac{1}{n}\,\mathrm{tr}\,G(x+i\varepsilon)\right).
 $$

@@ -19,22 +19,27 @@ pip install -U "git+https://github.com/slavakargin/free-matrix-laws.git@main"
 # Iterating the operator-valued Cauchy transform
 
 We solve the operator-valued semicircle equation
+
 $$
 z\,G \;=\; I \;+\; \eta(G)\,G, \qquad \Im z>0,
 $$
+
 where $\eta(B)=\sum_{i=1}^s A_i\,B\,A_i^\ast$ is a completely positive (Kraus) map.
 
 ## Fixed-point maps
 
 The simplest iteration is
+
 $$
 G \;\mapsto\; (\,zI - \eta(G)\,)^{-1}.
 $$
 
 Following Helton–Rashidi Far–Speicher (IMRN 2007), a numerically friendlier choice is the *half-averaged* step
+
 $$
 G \;\mapsto\; \tfrac12\Big[\,G \;+\; (\,zI - \eta(G)\,)^{-1}\Big],
 $$
+
 which damps oscillations while preserving the correct fixed point.
 
 > **Reference.** J. W. Helton, R. Rashidi Far, R. Speicher,  

@@ -58,10 +58,11 @@ $$
 These functions assume you already know:
 
 1. The **linearization bias** matrix $a_0$ (called `a` below).
-2. The list/stack of **Kraus matrices** `AA = (A_1,\dots,A_s)` that define the covariance map
-   $$
-   \eta(B) = \sum_{i=1}^s A_i\,B\,A_i^\ast.
-   $$
+2. The list/stack of **Kraus matrices** `AA` $=(A_1,\dots,A_s)$ that define the covariance map
+
+    $$
+    \eta(B) = \sum_{i=1}^s A_i\,B\,A_i^\ast.
+    $$
 
 > In typical linearizations, the $A_i$ are built from the coefficient matrices $a_j$
 > of the linearization, but this construction is outside the scope of this how-to.
@@ -160,6 +161,7 @@ print("f(x) ≈", fx)
 ## What is actually returned
 
 `polynomial_semicircle_density(x, ...)` returns
+
 $$
 f(x)\;\approx\;-\frac{1}{\pi}\,\operatorname{Im}\,G(x+i\varepsilon)_{11}.
 $$
