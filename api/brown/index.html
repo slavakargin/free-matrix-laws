@@ -1,0 +1,3162 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://slavakargin.github.io/free-matrix-laws/api/brown/">
+      
+      
+        <link rel="prev" href="../singularity/">
+      
+      
+        <link rel="next" href="../../howto/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Brown measure - free-matrix-laws</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-brown-measure" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="free-matrix-laws" class="md-header__button md-logo" aria-label="free-matrix-laws" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            free-matrix-laws
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Brown measure
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/slavakargin/free-matrix-laws" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="free-matrix-laws" class="md-nav__button md-logo" aria-label="free-matrix-laws" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    free-matrix-laws
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/slavakargin/free-matrix-laws" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notebooks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Notebooks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notebooks/10_semicircle_methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methods for calculating the eigevalue density of matrix semicircle and of polynomials in free random variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../opvalued/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operator-valued maps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ensembles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Random Ensembles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quadrature/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quadrature (brute-force)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../singularity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Singularity analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brown measure
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brown measure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.hermitize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hermitize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cauchy_hermitized_matrix_semicircle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_log_potential" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_log_potential
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_density
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_density_grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_density_grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/covariance_map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Covariance map (η)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/solve_cauchy_semicircle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Semicircle Cauchy transform solver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/solve_cauchy_biased/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biased semicircle Cauchy transform solver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/random_semicircle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Random Semicircle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/semicircle_density/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Semicircle density
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/biased_semicircle_density/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biased semicircle density
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/polynomial_semicircle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polynomial semicircle (linearization)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/anticommutator_subordination/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Anticommutator via subordination
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/fuglede_kadison_determinant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fuglede–Kadison determinant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/cp_sinkhorn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CP Sinkhorn (symmetric OSI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/singularity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Singularity analysis at zero
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/quadrature/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quadrature-based Cauchy transform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/iterations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fixed-point iterations (internals)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.hermitize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hermitize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cauchy_hermitized_matrix_semicircle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_log_potential" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_log_potential
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_density
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#free_matrix_laws.brown.brown_density_grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brown_density_grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-brown-measure">API — Brown measure</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="free_matrix_laws.brown"></a>
+    <div class="doc doc-contents first">
+
+        <p>Brown measure of (biased) matrix-valued semicircular elements.</p>
+<p>For arbitrary <span class="arithmatex">\(a_0,a_1,\dots,a_r\in M_m(\mathbb C)\)</span> and free standard
+semicirculars <span class="arithmatex">\(s_1,\dots,s_r\)</span> let</p>
+<div class="arithmatex">\[
+    S \;=\; a_0\otimes 1 \;+\; \sum_{i=1}^r a_i\otimes s_i .
+\]</div>
+<p>The Brown measure <span class="arithmatex">\(\mu_S\)</span> is recovered from the logarithmic potential
+<span class="arithmatex">\(\log\Delta(S-z)\)</span> as <span class="arithmatex">\(\mu_S=\frac1{2\pi}\nabla_z^2\log\Delta(S-z)\)</span>.  This
+module computes the <span class="arithmatex">\(\varepsilon\)</span>-regularized versions</p>
+<div class="arithmatex">\[
+    L_\varepsilon(z)=\log\Delta(H_z-i\varepsilon),
+    \qquad
+    \rho_\varepsilon(z)=\frac1{2\pi}\nabla_z^2 L_\varepsilon(z),
+\]</div>
+<p>where <span class="arithmatex">\(H_z=\begin{pmatrix}0&amp;S-z\\ (S-z)^*&amp;0\end{pmatrix}\)</span> is the
+hermitization.  As <span class="arithmatex">\(\varepsilon\downarrow0\)</span>, <span class="arithmatex">\(L_\varepsilon\downarrow
+\log\Delta(S-z)\)</span> and <span class="arithmatex">\(\rho_\varepsilon\,dA\to\mu_S\)</span> weakly.</p>
+
+
+<details class="method" open>
+  <summary>Method</summary>
+  <p>With <span class="arithmatex">\(G=G(z;i\varepsilon)\in M_{2m}(\mathbb C)\)</span> the solution of the
+hermitized Dyson equation</p>
+<div class="arithmatex">\[
+    G^{-1}+\eta^{\mathrm h}(G)=i\varepsilon-A_0(z),
+    \qquad
+    A_0(z)=\begin{pmatrix}0&amp;a_0-z\\ a_0^*-\bar z&amp;0\end{pmatrix},
+    \quad
+    \eta^{\mathrm h}(B)=\sum_i A_iBA_i,
+    \quad
+    A_i=\begin{pmatrix}0&amp;a_i\\ a_i^*&amp;0\end{pmatrix},
+\]</div>
+<p>one has the exact identities</p>
+<div class="arithmatex">\[
+    \partial_z L_\varepsilon=\tfrac12\operatorname{tr}_m G_{21},
+    \qquad
+    \rho_\varepsilon=\frac1\pi\operatorname{tr}_m
+        \bigl[\partial_{\bar z}G\bigr]_{21},
+    \qquad
+    (\mathrm{id}-\mathcal C_G\eta^{\mathrm h})\bigl[\partial_{\bar z}G\bigr]
+      = -G\,E_{21}\,G ,
+\]</div>
+<p>where <span class="arithmatex">\(\mathcal C_G(K)=GKG\)</span> and <span class="arithmatex">\(E_{21}\)</span> is the block matrix with <span class="arithmatex">\(I_m\)</span>
+in the lower-left corner.  The operator <span class="arithmatex">\(\mathrm{id}-\mathcal C_G\eta^{\mathrm h}\)</span>
+is the Newton Jacobian of the Dyson equation (up to the factor
+<span class="arithmatex">\(\mathcal C_{G^{-1}}\)</span>), so the density costs one extra linear solve with
+a factorization the Newton solver already holds.</p>
+<p>The Dyson equation is solved by Newton's method.  Inside the support the
+Jacobian has a singular value of order <span class="arithmatex">\(\varepsilon\)</span> (the "chiral" soft
+mode <span class="arithmatex">\(JG+GJ\)</span>, <span class="arithmatex">\(J=\operatorname{diag}(I,-I)\)</span>); an error <span class="arithmatex">\(\delta\)</span> in <span class="arithmatex">\(G\)</span>
+can be amplified to <span class="arithmatex">\(\delta/\varepsilon\)</span> in <span class="arithmatex">\(\partial_{\bar z}G\)</span>, which is
+why a fixed-point iteration is not good enough here and the residual is
+driven to machine precision.</p>
+</details>
+
+<details class="public-api" open>
+  <summary>Public API</summary>
+  <ul>
+<li><a class="autorefs autorefs-internal" title="hermitize(z, a0, a)" href="#free_matrix_laws.brown.hermitize"><code>hermitize</code></a> — build <span class="arithmatex">\(A_0(z)\)</span> and <span class="arithmatex">\((A_i)\)</span> of size <span class="arithmatex">\(2m\)</span>.</li>
+<li><a class="autorefs autorefs-internal" title="cauchy_hermitized_matrix_semicircle(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, warmup=200, return_info=False)" href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle"><code>cauchy_hermitized_matrix_semicircle</code></a> — Newton solver for
+  <span class="arithmatex">\(G(z;i\varepsilon)\)</span>.</li>
+<li><a class="autorefs autorefs-internal" title="brown_log_potential(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100)" href="#free_matrix_laws.brown.brown_log_potential"><code>brown_log_potential</code></a> — <span class="arithmatex">\(L_\varepsilon(z)\)</span>.</li>
+<li><a class="autorefs autorefs-internal" title="brown_density(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, return_info=False)" href="#free_matrix_laws.brown.brown_density"><code>brown_density</code></a> — <span class="arithmatex">\(\rho_\varepsilon(z)\)</span>.</li>
+<li><a class="autorefs autorefs-internal" title="brown_density_grid(xs, ys, a0, a, eps=0.0001, tol=1e-13, maxiter=100, return_potential=False)" href="#free_matrix_laws.brown.brown_density_grid"><code>brown_density_grid</code></a> — <span class="arithmatex">\(\rho_\varepsilon\)</span> on a rectangular grid
+  with warm starts.</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.brown.hermitize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">hermitize</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Hermitize the data of <span class="arithmatex">\(S=a_0\otimes1+\sum_ia_i\otimes s_i\)</span> at the point <span class="arithmatex">\(z\)</span>.</p>
+<p>Returns the Hermitian matrices</p>
+<div class="arithmatex">\[
+  A_0(z)=\begin{pmatrix}0&amp;a_0-zI\\ a_0^*-\bar zI&amp;0\end{pmatrix},
+  \qquad
+  A_i=\begin{pmatrix}0&amp;a_i\\ a_i^*&amp;0\end{pmatrix},
+  \quad i=1,\dots,r,
+\]</div>
+<p>of size <span class="arithmatex">\(2m\)</span>, so that</p>
+<div class="arithmatex">\[
+  H_z=\begin{pmatrix}0&amp;S-z\\(S-z)^*&amp;0\end{pmatrix}
+     =A_0(z)\otimes1+\sum_iA_i\otimes s_i
+\]</div>
+<p>is a self-adjoint matrix semicircle with mean <span class="arithmatex">\(A_0(z)\)</span> and covariance
+<span class="arithmatex">\(\eta^{\mathrm h}(B)=\sum_iA_iBA_i\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>z</code>
+            </td>
+            <td>
+                  <code><span title="complex">complex</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point in the complex plane.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a0</code>
+            </td>
+            <td>
+                  <code>(m,m) array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean matrix (arbitrary, not necessarily Hermitian).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>sequence of (m,m) arrays or stacked (r,m,m) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Coefficients <span class="arithmatex">\(a_i\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>A0</code></td>            <td>
+                  <code>(2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The complex Hermitian matrix <span class="arithmatex">\(A_0(z)\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>A</code></td>            <td>
+                  <code>(r,2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The complex Hermitian matrices <span class="arithmatex">\(A_1,\dots,A_r\)</span>, stacked.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/free_matrix_laws/brown.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hermitize</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="nb">complex</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    Hermitize the data of $S=a_0\otimes1+\sum_ia_i\otimes s_i$ at the point $z$.</span>
+
+<span class="sd">    Returns the Hermitian matrices</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      A_0(z)=\begin{pmatrix}0&amp;a_0-zI\\ a_0^*-\bar zI&amp;0\end{pmatrix},</span>
+<span class="sd">      \qquad</span>
+<span class="sd">      A_i=\begin{pmatrix}0&amp;a_i\\ a_i^*&amp;0\end{pmatrix},</span>
+<span class="sd">      \quad i=1,\dots,r,</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    of size $2m$, so that</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      H_z=\begin{pmatrix}0&amp;S-z\\(S-z)^*&amp;0\end{pmatrix}</span>
+<span class="sd">         =A_0(z)\otimes1+\sum_iA_i\otimes s_i</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    is a self-adjoint matrix semicircle with mean $A_0(z)$ and covariance</span>
+<span class="sd">    $\eta^{\mathrm h}(B)=\sum_iA_iBA_i$.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : complex</span>
+<span class="sd">        Point in the complex plane.</span>
+<span class="sd">    a0 : (m,m) array_like</span>
+<span class="sd">        Mean matrix (arbitrary, not necessarily Hermitian).</span>
+<span class="sd">    a : sequence of (m,m) arrays or stacked (r,m,m) array</span>
+<span class="sd">        Coefficients $a_i$ (arbitrary).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A0 : (2m,2m) ndarray</span>
+<span class="sd">        The complex Hermitian matrix $A_0(z)$.</span>
+<span class="sd">    A : (r,2m,2m) ndarray</span>
+<span class="sd">        The complex Hermitian matrices $A_1,\dots,A_r$, stacked.</span>
+<span class="sd">    '''</span>
+    <span class="n">a0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">a0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">a0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">a0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a0 must be square; got </span><span class="si">{</span><span class="n">a0</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">a0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">a_arr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_as_stack</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">a_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a_arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">a_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a must be (r,</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">); got </span><span class="si">{</span><span class="n">a_arr</span><span class="o">.</span><span class="n">shape</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">a0</span> <span class="o">-</span> <span class="nb">complex</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">*</span> <span class="n">I</span>
+    <span class="n">A0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">Z</span><span class="p">,</span> <span class="n">top</span><span class="p">],</span> <span class="p">[</span><span class="n">top</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">]])</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">Z</span><span class="p">,</span> <span class="n">ai</span><span class="p">],</span> <span class="p">[</span><span class="n">ai</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">]])</span> <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">a_arr</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">A0</span><span class="p">,</span> <span class="n">A</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cauchy_hermitized_matrix_semicircle</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">return_info</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Hermitized matrix Cauchy transform <span class="arithmatex">\(G(z;i\varepsilon)\)</span> of
+<span class="arithmatex">\(S=a_0\otimes1+\sum_ia_i\otimes s_i\)</span>.</p>
+<p>Solves, by Newton's method,</p>
+<div class="arithmatex">\[
+  G^{-1}+\eta^{\mathrm h}(G)=i\varepsilon I_{2m}-A_0(z),
+  \qquad -\operatorname{Im}G\succ0 ,
+\]</div>
+<p>where <span class="arithmatex">\(A_0(z)\)</span> and <span class="arithmatex">\(\eta^{\mathrm h}\)</span> are built by <a class="autorefs autorefs-internal" title="hermitize(z, a0, a)" href="#free_matrix_laws.brown.hermitize"><code>hermitize</code></a>.
+In block form,</p>
+<div class="arithmatex">\[
+  G(z;i\varepsilon)=
+  \begin{pmatrix}
+    -i\varepsilon\,\mathbb E[(XX^*+\varepsilon^2)^{-1}] &amp;
+    -\mathbb E[X(X^*X+\varepsilon^2)^{-1}]\\
+    -\mathbb E[X^*(XX^*+\varepsilon^2)^{-1}] &amp;
+    -i\varepsilon\,\mathbb E[(X^*X+\varepsilon^2)^{-1}]
+  \end{pmatrix},
+  \qquad X=S-z,
+\]</div>
+<p>with <span class="arithmatex">\(\mathbb E=\mathrm{id}\otimes\tau\)</span>.  In particular
+<span class="arithmatex">\(G_{12}=G_{21}^*\)</span> and <span class="arithmatex">\(\operatorname{tr}G_{11}=\operatorname{tr}G_{22}\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>z</code>
+            </td>
+            <td>
+                  <code><span title="complex">complex</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point <span class="arithmatex">\(z\in\mathbb C\)</span> at which <span class="arithmatex">\(S-z\)</span> is hermitized.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a0</code>
+            </td>
+            <td>
+                  <code>(m,m) array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean matrix <span class="arithmatex">\(a_0\)</span> (arbitrary, not necessarily Hermitian).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>sequence of (m,m) arrays or stacked (r,m,m) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Coefficients <span class="arithmatex">\(a_1,\dots,a_r\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>eps</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Regularization <span class="arithmatex">\(\varepsilon&gt;0\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-4</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>G0</code>
+            </td>
+            <td>
+                  <code>(2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Warm start, e.g. the solution at a nearby <span class="arithmatex">\(z\)</span>.  If it satisfies
+<span class="arithmatex">\(-\operatorname{Im}G_0\succ0\)</span>, the damped warm-up iteration is
+skipped.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Newton stops when the Frobenius norm of the residual
+<span class="arithmatex">\(I+\eta^{\mathrm h}(G)\,G-W\,G\)</span>, <span class="arithmatex">\(W=i\varepsilon-A_0(z)\)</span>, is
+below <code>tol</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-13</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>maxiter</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Newton iteration cap.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>warmup</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of damped fixed-point steps before Newton when <code>G0</code> is
+<code>None</code> (twenty times as many in the fallback).</p>
+              </div>
+            </td>
+            <td>
+                  <code>200</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>return_info</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also return a dict with keys <code>iters</code>, <code>residual</code> and
+<code>jacobian</code> (the <span class="arithmatex">\((2m)^2\times(2m)^2\)</span> matrix of
+<span class="arithmatex">\(K\mapsto-G^{-1}KG^{-1}+\eta^{\mathrm h}(K)\)</span> in row-major
+vectorization).</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>G</code></td>            <td>
+                  <code>(2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The complex matrix <span class="arithmatex">\(G(z;i\varepsilon)\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>info</code></td>            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Returned only if <code>return_info</code> is True; see above.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeError">RuntimeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If neither Newton nor the damped fallback produce a solution with
+<span class="arithmatex">\(-\operatorname{Im}G\succ0\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Warns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeWarning">RuntimeWarning</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the final residual exceeds <span class="arithmatex">\(10^{-8}\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/free_matrix_laws/brown.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cauchy_hermitized_matrix_semicircle</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">:</span> <span class="nb">complex</span><span class="p">,</span>
+    <span class="n">a0</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">G0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-13</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="n">return_info</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    Hermitized matrix Cauchy transform $G(z;i\varepsilon)$ of</span>
+<span class="sd">    $S=a_0\otimes1+\sum_ia_i\otimes s_i$.</span>
+
+<span class="sd">    Solves, by Newton's method,</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      G^{-1}+\eta^{\mathrm h}(G)=i\varepsilon I_{2m}-A_0(z),</span>
+<span class="sd">      \qquad -\operatorname{Im}G\succ0 ,</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    where $A_0(z)$ and $\eta^{\mathrm h}$ are built by [`hermitize`][free_matrix_laws.brown.hermitize].</span>
+<span class="sd">    In block form,</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      G(z;i\varepsilon)=</span>
+<span class="sd">      \begin{pmatrix}</span>
+<span class="sd">        -i\varepsilon\,\mathbb E[(XX^*+\varepsilon^2)^{-1}] &amp;</span>
+<span class="sd">        -\mathbb E[X(X^*X+\varepsilon^2)^{-1}]\\</span>
+<span class="sd">        -\mathbb E[X^*(XX^*+\varepsilon^2)^{-1}] &amp;</span>
+<span class="sd">        -i\varepsilon\,\mathbb E[(X^*X+\varepsilon^2)^{-1}]</span>
+<span class="sd">      \end{pmatrix},</span>
+<span class="sd">      \qquad X=S-z,</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    with $\mathbb E=\mathrm{id}\otimes\tau$.  In particular</span>
+<span class="sd">    $G_{12}=G_{21}^*$ and $\operatorname{tr}G_{11}=\operatorname{tr}G_{22}$.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : complex</span>
+<span class="sd">        Point $z\in\mathbb C$ at which $S-z$ is hermitized.</span>
+<span class="sd">    a0 : (m,m) array_like</span>
+<span class="sd">        Mean matrix $a_0$ (arbitrary, not necessarily Hermitian).</span>
+<span class="sd">    a : sequence of (m,m) arrays or stacked (r,m,m) array</span>
+<span class="sd">        Coefficients $a_1,\dots,a_r$ (arbitrary).</span>
+<span class="sd">    eps : float, default 1e-4</span>
+<span class="sd">        Regularization $\varepsilon&gt;0$.</span>
+<span class="sd">    G0 : (2m,2m) ndarray, optional</span>
+<span class="sd">        Warm start, e.g. the solution at a nearby $z$.  If it satisfies</span>
+<span class="sd">        $-\operatorname{Im}G_0\succ0$, the damped warm-up iteration is</span>
+<span class="sd">        skipped.</span>
+<span class="sd">    tol : float, default 1e-13</span>
+<span class="sd">        Newton stops when the Frobenius norm of the residual</span>
+<span class="sd">        $I+\eta^{\mathrm h}(G)\,G-W\,G$, $W=i\varepsilon-A_0(z)$, is</span>
+<span class="sd">        below `tol`.</span>
+<span class="sd">    maxiter : int, default 100</span>
+<span class="sd">        Newton iteration cap.</span>
+<span class="sd">    warmup : int, default 200</span>
+<span class="sd">        Number of damped fixed-point steps before Newton when `G0` is</span>
+<span class="sd">        `None` (twenty times as many in the fallback).</span>
+<span class="sd">    return_info : bool, default False</span>
+<span class="sd">        If True, also return a dict with keys `iters`, `residual` and</span>
+<span class="sd">        `jacobian` (the $(2m)^2\times(2m)^2$ matrix of</span>
+<span class="sd">        $K\mapsto-G^{-1}KG^{-1}+\eta^{\mathrm h}(K)$ in row-major</span>
+<span class="sd">        vectorization).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    G : (2m,2m) ndarray</span>
+<span class="sd">        The complex matrix $G(z;i\varepsilon)$.</span>
+<span class="sd">    info : dict</span>
+<span class="sd">        Returned only if `return_info` is True; see above.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If neither Newton nor the damped fallback produce a solution with</span>
+<span class="sd">        $-\operatorname{Im}G\succ0$.</span>
+
+<span class="sd">    Warns</span>
+<span class="sd">    -----</span>
+<span class="sd">    RuntimeWarning</span>
+<span class="sd">        If the final residual exceeds $10^{-8}$.</span>
+<span class="sd">    '''</span>
+    <span class="k">if</span> <span class="n">eps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"eps must be &gt; 0"</span><span class="p">)</span>
+    <span class="n">A0</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">hermitize</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">A0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span> <span class="o">-</span> <span class="n">A0</span>
+    <span class="n">eta_mat</span> <span class="o">=</span> <span class="n">_eta_matrix</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">G0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">_hfs_warmup</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">warmup</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">G0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_neg_imag</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+            <span class="n">G</span> <span class="o">=</span> <span class="n">_hfs_warmup</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">warmup</span><span class="p">)</span>
+
+    <span class="n">G</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">J</span> <span class="o">=</span> <span class="n">_dyson_newton</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">eta_mat</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">tol</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_is_neg_imag</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+        <span class="c1"># fall back to a long damped iteration (which preserves the</span>
+        <span class="c1"># half-plane), then polish</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">_hfs_warmup</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">warmup</span><span class="p">)</span>
+        <span class="n">G</span><span class="p">,</span> <span class="n">iters2</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">J</span> <span class="o">=</span> <span class="n">_dyson_newton</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">eta_mat</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">)</span>
+        <span class="n">iters</span> <span class="o">+=</span> <span class="n">iters2</span>
+    <span class="k">if</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dyson solver stopped with residual </span><span class="si">{</span><span class="n">res</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> at z=</span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">, "</span>
+                      <span class="sa">f</span><span class="s2">"eps=</span><span class="si">{</span><span class="n">eps</span><span class="si">}</span><span class="s2">; the result may be inaccurate."</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_neg_imag</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"Dyson solver did not return a solution with -Im G &gt; 0 "</span>
+            <span class="sa">f</span><span class="s2">"(residual </span><span class="si">{</span><span class="n">res</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">); try a larger eps or a warm start."</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">G</span><span class="p">,</span> <span class="p">{</span><span class="s2">"iters"</span><span class="p">:</span> <span class="n">iters</span><span class="p">,</span> <span class="s2">"residual"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> <span class="s2">"jacobian"</span><span class="p">:</span> <span class="n">J</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">G</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.brown.brown_log_potential" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">brown_log_potential</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Regularized logarithmic potential of the Brown measure,</p>
+<div class="arithmatex">\[
+  L_\varepsilon(z)=\log\Delta(H_z-i\varepsilon)
+  =\tfrac12(\operatorname{tr}_m\otimes\tau)\log\bigl((S-z)^*(S-z)+\varepsilon^2\bigr),
+\]</div>
+<p>which decreases to <span class="arithmatex">\(\log\Delta(S-z)=\int\log|w-z|\,d\mu_S(w)\)</span> as
+<span class="arithmatex">\(\varepsilon\downarrow0\)</span>.</p>
+<p>Computed from <span class="arithmatex">\(G=G(z;i\varepsilon)\)</span> by the closed determinant identity</p>
+<div class="arithmatex">\[
+  L_\varepsilon(z)=-\frac1{2m}\log|\det G|
+    +\frac12\operatorname{Re}\operatorname{tr}_{2m}\bigl(G\,\eta^{\mathrm h}(G)\bigr).
+\]</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>z</code>
+            </td>
+            <td>
+                  <code><span title="complex">complex</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point in the complex plane.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a0</code>
+            </td>
+            <td>
+                  <code>(m,m) array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean matrix <span class="arithmatex">\(a_0\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>sequence of (m,m) arrays or stacked (r,m,m) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Coefficients <span class="arithmatex">\(a_1,\dots,a_r\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>eps</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Regularization <span class="arithmatex">\(\varepsilon&gt;0\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-4</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>G0</code>
+            </td>
+            <td>
+                  <code>(2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Warm start for the Dyson solver.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Residual tolerance; see <a class="autorefs autorefs-internal" title="cauchy_hermitized_matrix_semicircle(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, warmup=200, return_info=False)" href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle"><code>cauchy_hermitized_matrix_semicircle</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-13</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>maxiter</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Newton iteration cap.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><span class="arithmatex">\(L_\varepsilon(z)\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/free_matrix_laws/brown.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">brown_log_potential</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">:</span> <span class="nb">complex</span><span class="p">,</span>
+    <span class="n">a0</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">G0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-13</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    Regularized logarithmic potential of the Brown measure,</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      L_\varepsilon(z)=\log\Delta(H_z-i\varepsilon)</span>
+<span class="sd">      =\tfrac12(\operatorname{tr}_m\otimes\tau)\log\bigl((S-z)^*(S-z)+\varepsilon^2\bigr),</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    which decreases to $\log\Delta(S-z)=\int\log|w-z|\,d\mu_S(w)$ as</span>
+<span class="sd">    $\varepsilon\downarrow0$.</span>
+
+<span class="sd">    Computed from $G=G(z;i\varepsilon)$ by the closed determinant identity</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      L_\varepsilon(z)=-\frac1{2m}\log|\det G|</span>
+<span class="sd">        +\frac12\operatorname{Re}\operatorname{tr}_{2m}\bigl(G\,\eta^{\mathrm h}(G)\bigr).</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : complex</span>
+<span class="sd">        Point in the complex plane.</span>
+<span class="sd">    a0 : (m,m) array_like</span>
+<span class="sd">        Mean matrix $a_0$ (arbitrary).</span>
+<span class="sd">    a : sequence of (m,m) arrays or stacked (r,m,m) array</span>
+<span class="sd">        Coefficients $a_1,\dots,a_r$ (arbitrary).</span>
+<span class="sd">    eps : float, default 1e-4</span>
+<span class="sd">        Regularization $\varepsilon&gt;0$.</span>
+<span class="sd">    G0 : (2m,2m) ndarray, optional</span>
+<span class="sd">        Warm start for the Dyson solver.</span>
+<span class="sd">    tol : float, default 1e-13</span>
+<span class="sd">        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].</span>
+<span class="sd">    maxiter : int, default 100</span>
+<span class="sd">        Newton iteration cap.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        $L_\varepsilon(z)$.</span>
+<span class="sd">    '''</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">hermitize</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">cauchy_hermitized_matrix_semicircle</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="n">G0</span><span class="p">,</span>
+                                             <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_log_potential_from_G</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.brown.brown_density" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">brown_density</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">return_info</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Regularized density <span class="arithmatex">\(\rho_\varepsilon(z)\)</span> of the Brown measure of
+<span class="arithmatex">\(S=a_0\otimes1+\sum_ia_i\otimes s_i\)</span>.</p>
+<div class="arithmatex">\[
+  \rho_\varepsilon(z)=\frac1{2\pi}\nabla_z^2 L_\varepsilon(z)
+  =\frac1\pi\operatorname{tr}_m\bigl[\partial_{\bar z}G\bigr]_{21},
+  \qquad
+  (\mathrm{id}-\mathcal C_G\eta^{\mathrm h})\bigl[\partial_{\bar z}G\bigr]
+    =-G\,E_{21}\,G,
+\]</div>
+<p>with <span class="arithmatex">\(G=G(z;i\varepsilon)\)</span> from
+<a class="autorefs autorefs-internal" title="cauchy_hermitized_matrix_semicircle(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, warmup=200, return_info=False)" href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle"><code>cauchy_hermitized_matrix_semicircle</code></a>.  The identity is exact for
+every <span class="arithmatex">\(\varepsilon&gt;0\)</span>; <span class="arithmatex">\(\rho_\varepsilon\,dA\)</span> converges weakly to the
+Brown measure as <span class="arithmatex">\(\varepsilon\downarrow0\)</span>.  The density of the Brown
+measure typically jumps at the boundary of its support, and the
+regularization smooths that jump over a scale of order
+<span class="arithmatex">\(\varepsilon\)</span>; in the bulk the bias is <span class="arithmatex">\(O(\varepsilon^2)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>z</code>
+            </td>
+            <td>
+                  <code><span title="complex">complex</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Point in the complex plane.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a0</code>
+            </td>
+            <td>
+                  <code>(m,m) array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean matrix <span class="arithmatex">\(a_0\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>sequence of (m,m) arrays or stacked (r,m,m) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Coefficients <span class="arithmatex">\(a_1,\dots,a_r\)</span> (arbitrary; no self-adjointness
+assumed).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>eps</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Regularization <span class="arithmatex">\(\varepsilon&gt;0\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-4</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>G0</code>
+            </td>
+            <td>
+                  <code>(2m,2m) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Warm start for the Dyson solver.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Residual tolerance; see <a class="autorefs autorefs-internal" title="cauchy_hermitized_matrix_semicircle(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, warmup=200, return_info=False)" href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle"><code>cauchy_hermitized_matrix_semicircle</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-13</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>maxiter</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Newton iteration cap.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>return_info</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also return a dict with keys <code>G</code> (for warm-starting a
+neighbouring point), <code>dG_dzbar</code>, <code>log_potential</code>, <code>residual</code>,
+<code>iters</code> and <code>imag_part</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>rho</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><span class="arithmatex">\(\rho_\varepsilon(z)\)</span>.  The computed value is real up to
+round-off; its imaginary part is discarded (and reported as
+<code>imag_part</code> in <code>info</code>).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>info</code></td>            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Returned only if <code>return_info</code> is True; see above.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>Circular element (<span class="arithmatex">\(a_1=1/\sqrt2\)</span>, <span class="arithmatex">\(a_2=i/\sqrt2\)</span>): uniform on the unit disk.</p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">free_matrix_laws</span><span class="w"> </span><span class="kn">import</span> <span class="n">brown_density</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span> <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">round</span><span class="p">(</span><span class="n">brown_density</span><span class="p">(</span><span class="mf">0.3</span><span class="o">+</span><span class="mf">0.2</span><span class="n">j</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="go">1.0</span>
+</code></pre></div>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/free_matrix_laws/brown.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">brown_density</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">:</span> <span class="nb">complex</span><span class="p">,</span>
+    <span class="n">a0</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">G0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-13</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">return_info</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    Regularized density $\rho_\varepsilon(z)$ of the Brown measure of</span>
+<span class="sd">    $S=a_0\otimes1+\sum_ia_i\otimes s_i$.</span>
+
+<span class="sd">    $$</span>
+<span class="sd">      \rho_\varepsilon(z)=\frac1{2\pi}\nabla_z^2 L_\varepsilon(z)</span>
+<span class="sd">      =\frac1\pi\operatorname{tr}_m\bigl[\partial_{\bar z}G\bigr]_{21},</span>
+<span class="sd">      \qquad</span>
+<span class="sd">      (\mathrm{id}-\mathcal C_G\eta^{\mathrm h})\bigl[\partial_{\bar z}G\bigr]</span>
+<span class="sd">        =-G\,E_{21}\,G,</span>
+<span class="sd">    $$</span>
+
+<span class="sd">    with $G=G(z;i\varepsilon)$ from</span>
+<span class="sd">    [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].  The identity is exact for</span>
+<span class="sd">    every $\varepsilon&gt;0$; $\rho_\varepsilon\,dA$ converges weakly to the</span>
+<span class="sd">    Brown measure as $\varepsilon\downarrow0$.  The density of the Brown</span>
+<span class="sd">    measure typically jumps at the boundary of its support, and the</span>
+<span class="sd">    regularization smooths that jump over a scale of order</span>
+<span class="sd">    $\varepsilon$; in the bulk the bias is $O(\varepsilon^2)$.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : complex</span>
+<span class="sd">        Point in the complex plane.</span>
+<span class="sd">    a0 : (m,m) array_like</span>
+<span class="sd">        Mean matrix $a_0$ (arbitrary).</span>
+<span class="sd">    a : sequence of (m,m) arrays or stacked (r,m,m) array</span>
+<span class="sd">        Coefficients $a_1,\dots,a_r$ (arbitrary; no self-adjointness</span>
+<span class="sd">        assumed).</span>
+<span class="sd">    eps : float, default 1e-4</span>
+<span class="sd">        Regularization $\varepsilon&gt;0$.</span>
+<span class="sd">    G0 : (2m,2m) ndarray, optional</span>
+<span class="sd">        Warm start for the Dyson solver.</span>
+<span class="sd">    tol : float, default 1e-13</span>
+<span class="sd">        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].</span>
+<span class="sd">    maxiter : int, default 100</span>
+<span class="sd">        Newton iteration cap.</span>
+<span class="sd">    return_info : bool, default False</span>
+<span class="sd">        If True, also return a dict with keys `G` (for warm-starting a</span>
+<span class="sd">        neighbouring point), `dG_dzbar`, `log_potential`, `residual`,</span>
+<span class="sd">        `iters` and `imag_part`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rho : float</span>
+<span class="sd">        $\rho_\varepsilon(z)$.  The computed value is real up to</span>
+<span class="sd">        round-off; its imaginary part is discarded (and reported as</span>
+<span class="sd">        `imag_part` in `info`).</span>
+<span class="sd">    info : dict</span>
+<span class="sd">        Returned only if `return_info` is True; see above.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Circular element ($a_1=1/\sqrt2$, $a_2=i/\sqrt2$): uniform on the unit disk.</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from free_matrix_laws import brown_density</span>
+<span class="sd">    &gt;&gt;&gt; a0 = np.zeros((1, 1)); a = [np.eye(1)/np.sqrt(2), 1j*np.eye(1)/np.sqrt(2)]</span>
+<span class="sd">    &gt;&gt;&gt; round(brown_density(0.3+0.2j, a0, a, eps=1e-4) * np.pi, 3)</span>
+<span class="sd">    1.0</span>
+<span class="sd">    '''</span>
+    <span class="n">a0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">a0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">G</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">cauchy_hermitized_matrix_semicircle</span><span class="p">(</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">G0</span><span class="o">=</span><span class="n">G0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">return_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">hermitize</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">val</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">_density_from_G</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">"jacobian"</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">return_info</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"G"</span><span class="p">:</span> <span class="n">G</span><span class="p">,</span>
+            <span class="s2">"dG_dzbar"</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span>
+            <span class="s2">"log_potential"</span><span class="p">:</span> <span class="n">_log_potential_from_G</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">A</span><span class="p">),</span>
+            <span class="s2">"residual"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"residual"</span><span class="p">],</span>
+            <span class="s2">"iters"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"iters"</span><span class="p">],</span>
+            <span class="s2">"imag_part"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">val</span><span class="p">)),</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">rho</span><span class="p">,</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="n">rho</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="free_matrix_laws.brown.brown_density_grid" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">brown_density_grid</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">return_potential</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p><span class="arithmatex">\(\rho_\varepsilon\)</span> on the rectangular grid <span class="arithmatex">\(\{x_j+iy_k\}\)</span>.</p>
+<p>The grid is traversed row by row in serpentine order and each point is
+warm-started from its predecessor.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>xs</code>
+            </td>
+            <td>
+                  <code>1-D array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Real parts <span class="arithmatex">\(x_j\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ys</code>
+            </td>
+            <td>
+                  <code>1-D array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Imaginary parts <span class="arithmatex">\(y_k\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a0</code>
+            </td>
+            <td>
+                  <code>(m,m) array_like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean matrix <span class="arithmatex">\(a_0\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>a</code>
+            </td>
+            <td>
+                  <code>sequence of (m,m) arrays or stacked (r,m,m) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Coefficients <span class="arithmatex">\(a_1,\dots,a_r\)</span> (arbitrary).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>eps</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Regularization <span class="arithmatex">\(\varepsilon&gt;0\)</span>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-4</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Residual tolerance; see <a class="autorefs autorefs-internal" title="cauchy_hermitized_matrix_semicircle(z, a0, a, eps=0.0001, G0=None, tol=1e-13, maxiter=100, warmup=200, return_info=False)" href="#free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle"><code>cauchy_hermitized_matrix_semicircle</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-13</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>maxiter</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Newton iteration cap.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>return_potential</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also return <span class="arithmatex">\(L_\varepsilon\)</span> on the grid.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>rho</code></td>            <td>
+                  <code>(len(ys), len(xs)) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>rho[k, j]</code> is <span class="arithmatex">\(\rho_\varepsilon(x_j+iy_k)\)</span>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>L</code></td>            <td>
+                  <code>(len(ys), len(xs)) ndarray</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><span class="arithmatex">\(L_\varepsilon(x_j+iy_k)\)</span>; returned only if <code>return_potential</code>
+is True.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/free_matrix_laws/brown.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">brown_density_grid</span><span class="p">(</span>
+    <span class="n">xs</span><span class="p">,</span>
+    <span class="n">ys</span><span class="p">,</span>
+    <span class="n">a0</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-13</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">return_potential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    $\rho_\varepsilon$ on the rectangular grid $\{x_j+iy_k\}$.</span>
+
+<span class="sd">    The grid is traversed row by row in serpentine order and each point is</span>
+<span class="sd">    warm-started from its predecessor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xs : 1-D array_like</span>
+<span class="sd">        Real parts $x_j$.</span>
+<span class="sd">    ys : 1-D array_like</span>
+<span class="sd">        Imaginary parts $y_k$.</span>
+<span class="sd">    a0 : (m,m) array_like</span>
+<span class="sd">        Mean matrix $a_0$ (arbitrary).</span>
+<span class="sd">    a : sequence of (m,m) arrays or stacked (r,m,m) array</span>
+<span class="sd">        Coefficients $a_1,\dots,a_r$ (arbitrary).</span>
+<span class="sd">    eps : float, default 1e-4</span>
+<span class="sd">        Regularization $\varepsilon&gt;0$.</span>
+<span class="sd">    tol : float, default 1e-13</span>
+<span class="sd">        Residual tolerance; see [`cauchy_hermitized_matrix_semicircle`][free_matrix_laws.brown.cauchy_hermitized_matrix_semicircle].</span>
+<span class="sd">    maxiter : int, default 100</span>
+<span class="sd">        Newton iteration cap.</span>
+<span class="sd">    return_potential : bool, default False</span>
+<span class="sd">        If True, also return $L_\varepsilon$ on the grid.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rho : (len(ys), len(xs)) ndarray</span>
+<span class="sd">        `rho[k, j]` is $\rho_\varepsilon(x_j+iy_k)$.</span>
+<span class="sd">    L : (len(ys), len(xs)) ndarray</span>
+<span class="sd">        $L_\varepsilon(x_j+iy_k)$; returned only if `return_potential`</span>
+<span class="sd">        is True.</span>
+<span class="sd">    '''</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">ys</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">xs</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+    <span class="n">G_prev</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ys</span><span class="p">):</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+            <span class="n">val</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">brown_density</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">y</span><span class="p">,</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                      <span class="n">G0</span><span class="o">=</span><span class="n">G_prev</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
+                                      <span class="n">return_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">rho</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="n">L</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">"log_potential"</span><span class="p">]</span>
+            <span class="n">G_prev</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">"G"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">return_potential</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rho</span><span class="p">,</span> <span class="n">L</span>
+    <span class="k">return</span> <span class="n">rho</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
