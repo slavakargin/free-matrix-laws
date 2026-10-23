@@ -18,3 +18,7 @@ dist/
 
 # OS
 .DS_Store
+
+# MkDocs build output (built and published by the deploy-docs workflow)
+site/
+.cache/
