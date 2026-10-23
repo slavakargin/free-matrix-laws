@@ -12,3 +12,8 @@
         - brown_log_potential
         - brown_density
         - brown_density_grid
+        - resolvent_matrix_semicircle
+        - spectral_radius_T
+        - spectrum_indicator
+        - spectrum_indicator_grid
+        - spectrum_boundary

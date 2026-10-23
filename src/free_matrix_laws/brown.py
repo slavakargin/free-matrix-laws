@@ -71,6 +71,27 @@ Public API
 * [`brown_density`][free_matrix_laws.brown.brown_density] — $\rho_\varepsilon(z)$.
 * [`brown_density_grid`][free_matrix_laws.brown.brown_density_grid] — $\rho_\varepsilon$ on a rectangular grid
   with warm starts.
+
+Spectrum criterion
+------------------
+This is a criterion in size $m$ for the spectrum of $S$, with no regularization.
+For $z\notin\sigma(S)$ the resolvent $g(z)=(\mathrm{id}\otimes\tau)[(z-S)^{-1}]$
+solves $g^{-1}+\kappa(g)=z-a_0$ with $\kappa(B)=\sum_ia_iBa_i$, and the
+map $T_g(B)=\sum_i(ga_i)B(ga_i)^*$ has spectral radius $r(T_g)<1$;
+conversely any invertible solution with $r(T_g)<1$ certifies
+$z\notin\sigma(S)$.  The boundary of the spectrum lies on the level set
+$r(T_{g(z)})=1$ (or where $g$ blows up).  The support of the Brown
+measure is contained in $\sigma(S)$; whether they coincide is open.
+
+* [`resolvent_matrix_semicircle`][free_matrix_laws.brown.resolvent_matrix_semicircle]
+  — $g(z)$ by Newton in size $m$.
+* [`spectral_radius_T`][free_matrix_laws.brown.spectral_radius_T] — $r(T_g)$.
+* [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator] —
+  $r(T_{g(z)})$, with $+\infty$ where no solution exists; $<1$ exactly
+  off the spectrum.
+* [`spectrum_indicator_grid`][free_matrix_laws.brown.spectrum_indicator_grid],
+  [`spectrum_boundary`][free_matrix_laws.brown.spectrum_boundary] —
+  the indicator on a grid and the boundary by bisection on grid edges.
 """
 from __future__ import annotations
 
@@ -87,6 +108,11 @@ __all__ = [
     "brown_log_potential",
     "brown_density",
     "brown_density_grid",
+    "resolvent_matrix_semicircle",
+    "spectral_radius_T",
+    "spectrum_indicator",
+    "spectrum_indicator_grid",
+    "spectrum_boundary",
 ]
 
 
@@ -649,3 +675,341 @@ def brown_density_grid(
     if return_potential:
         return rho, L
     return rho
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Spectrum of S in size m: resolvent g(z) and the criterion r(T_g) < 1
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _kappa_apply(B: np.ndarray, a: np.ndarray) -> np.ndarray:
+    r"""$\kappa(B)=\sum_i a_iBa_i$ (no adjoint) for a stacked $(r,m,m)$ array."""
+    return np.einsum("ijk,kl,ilm->jm", a, B, a)
+
+
+def _kappa_matrix(a: np.ndarray) -> np.ndarray:
+    r"""Matrix of $\kappa$ in row-major vectorization: $\sum_i a_i\otimes a_i^{\mathsf T}$."""
+    return sum(np.kron(ai, ai.T) for ai in a)
+
+
+def spectral_radius_T(g: np.ndarray, a) -> float:
+    r'''
+    Spectral radius of the completely positive map
+    $T_g(B)=g\,\eta_1(B)\,g^*=\sum_i (ga_i)\,B\,(ga_i)^*$ on $M_m(\mathbb C)$.
+
+    By the Perron--Frobenius theorem for positive maps the spectral radius
+    is an eigenvalue with a positive semidefinite eigenmatrix.  It is
+    computed as the largest modulus of the eigenvalues of the
+    $m^2\times m^2$ matrix $\sum_i (ga_i)\otimes\overline{(ga_i)}$.
+
+    Parameters
+    ----------
+    g : (m,m) ndarray
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$.
+
+    Returns
+    -------
+    float
+        $r(T_g)$.
+    '''
+    a_arr, _ = _as_stack(a)
+    g = np.asarray(g, dtype=complex)
+    L = [g @ np.asarray(ai, dtype=complex) for ai in a_arr]
+    T = sum(np.kron(Li, Li.conj()) for Li in L)
+    return float(np.abs(la.eigvals(T)).max())
+
+
+def resolvent_matrix_semicircle(
+    z: complex,
+    a0,
+    a,
+    g0: Optional[np.ndarray] = None,
+    eps: float = 1e-4,
+    tol: float = 1e-13,
+    maxiter: int = 60,
+    return_info: bool = False,
+):
+    r'''
+    Matrix resolvent $g(z)=(\mathrm{id}\otimes\tau)\bigl[(z-S)^{-1}\bigr]\in M_m(\mathbb C)$
+    of $S=a_0\otimes1+\sum_ia_i\otimes s_i$ for $z$ outside the spectrum.
+
+    Outside the spectrum $g$ is the unique invertible solution of the
+    size-$m$ equation
+
+    $$
+      g^{-1}+\kappa(g)=z-a_0,
+      \qquad
+      \kappa(B)=\sum_i a_iBa_i \quad\text{(no adjoint)},
+    $$
+
+    with $r(T_g)<1$, where $T_g(B)=\sum_i(ga_i)B(ga_i)^*$; see
+    [`spectral_radius_T`][free_matrix_laws.brown.spectral_radius_T] and
+    [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    The equation is solved by Newton's method on the polynomial residual
+    $I+\kappa(g)g-(z-a_0)g$.  Unless a warm start `g0` is given, the
+    iteration starts from the $(2,1)$ block of the hermitized Cauchy
+    transform $G(z;i\varepsilon)$, which converges to $g(z)$ as
+    $\varepsilon\downarrow0$ on every component of the resolvent set
+    (including bounded ones, where $g$ is not the continuation from
+    infinity).
+
+    Inside the spectrum the equation has no solution of the required
+    kind; Newton may then fail or converge to a solution with
+    $r(T_g)\ge1$.  Either outcome is reported through `info` and is what
+    the spectrum criterion relies on.
+
+    Parameters
+    ----------
+    z : complex
+        Point in the complex plane.
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    g0 : (m,m) ndarray, optional
+        Warm start, e.g. $g$ at a nearby point outside the spectrum.
+    eps : float, default 1e-4
+        Regularization of the hermitized solve used for the cold start
+        (only a starting point: the result does not depend on it).
+    tol : float, default 1e-13
+        Newton stops when the Frobenius norm of the residual is below
+        `tol`.
+    maxiter : int, default 60
+        Newton iteration cap.
+    return_info : bool, default False
+        If True, also return a dict with keys `residual`, `iters` and
+        `converged`.
+
+    Returns
+    -------
+    g : (m,m) ndarray
+        The last Newton iterate (equal to $g(z)$ when `converged`).
+    info : dict
+        Returned only if `return_info` is True.
+    '''
+    a0 = np.asarray(a0, dtype=complex)
+    m = a0.shape[0]
+    a_arr, _ = _as_stack(a)
+    a_arr = np.asarray(a_arr, dtype=complex)
+    I = np.eye(m, dtype=complex)
+    W = complex(z) * I - a0
+    kmat = _kappa_matrix(a_arr)
+
+    if g0 is None:
+        try:
+            G = cauchy_hermitized_matrix_semicircle(z, a0, a, eps=eps)
+            g = np.array(G[m:, :m])
+        except RuntimeError:
+            # no physical hermitized solution found: z is (numerically)
+            # deep inside the spectrum; start from the free-resolvent guess
+            g = la.inv(W)
+    else:
+        g = np.array(g0, dtype=complex)
+
+    def resid(g):
+        return I + _kappa_apply(g, a_arr) @ g - W @ g
+
+    F = resid(g)
+    res = la.norm(F)
+    converged = res <= tol
+    it = 0
+    while not converged and it < maxiter:
+        M = _kappa_apply(g, a_arr) - W
+        J = np.kron(I, g.T) @ kmat + np.kron(M, I)
+        try:
+            H = la.solve(J, -F.ravel()).reshape(m, m)
+        except la.LinAlgError:
+            break
+        alpha, ok = 1.0, False
+        for _ in range(30):
+            g_try = g + alpha * H
+            F_try = resid(g_try)
+            res_try = la.norm(F_try)
+            if res_try < res:
+                ok = True
+                break
+            alpha *= 0.5
+        if not ok:
+            break
+        g, F, res = g_try, F_try, res_try
+        it += 1
+        converged = res <= tol
+
+    if return_info:
+        return g, {"residual": float(res), "iters": it, "converged": bool(converged)}
+    return g
+
+
+def spectrum_indicator(
+    z: complex,
+    a0,
+    a,
+    g0: Optional[np.ndarray] = None,
+    eps: float = 1e-4,
+    tol: float = 1e-11,
+    return_g: bool = False,
+):
+    r'''
+    Spectrum criterion for $S=a_0\otimes1+\sum_ia_i\otimes s_i$ at $z$.
+
+    Returns $r(T_g)$ for the solution $g$ of the size-$m$ resolvent
+    equation found by
+    [`resolvent_matrix_semicircle`][free_matrix_laws.brown.resolvent_matrix_semicircle],
+    or $+\infty$ if no solution was found.  Then
+
+    $$
+      z\notin\sigma(S)
+      \quad\Longleftrightarrow\quad
+      \texttt{spectrum\_indicator}(z)<1 .
+    $$
+
+    Indeed, $z\notin\sigma(S)$ implies that $g(z)$ solves the equation
+    with $r(T_{g(z)})<1$, and conversely any invertible solution with
+    $r(T_g)<1$ forces $z\notin\sigma(S)$ and equals $g(z)$; so inside
+    the spectrum every solution Newton can land on has $r(T_g)\ge1$.
+    The boundary of the spectrum is contained in the level set
+    $\{r(T_{g(z)})=1\}$ together with points where $\|g(z)\|\to\infty$.
+
+    The support of the Brown measure is contained in $\sigma(S)$; whether
+    the two coincide for matrix semicirculars is an open question, so this
+    function describes the spectrum, which may be larger.
+
+    Parameters
+    ----------
+    z : complex
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    g0 : (m,m) ndarray, optional
+        Warm start for the resolvent solve.
+    eps : float, default 1e-4
+        Regularization for the cold start (hermitized solve).
+    tol : float, default 1e-11
+        Residual tolerance below which the solve counts as converged.
+    return_g : bool, default False
+        If True, also return the matrix $g$ (or `None` if not converged).
+
+    Returns
+    -------
+    float
+        $r(T_g)$, or `inf` if the resolvent equation was not solved.
+    g : (m,m) ndarray or None
+        Returned only if `return_g` is True.
+    '''
+    g, info = resolvent_matrix_semicircle(z, a0, a, g0=g0, eps=eps, tol=tol,
+                                          return_info=True)
+    if info["converged"] and np.isfinite(g).all():
+        r = spectral_radius_T(g, a)
+    else:
+        r, g = np.inf, None
+    if return_g:
+        return r, g
+    return r
+
+
+def spectrum_indicator_grid(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11):
+    r'''
+    [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator] on the
+    rectangular grid $\{x_j+iy_k\}$; each point is cold-started from the
+    hermitized solve, which is itself warm-started along a serpentine path.
+
+    Parameters
+    ----------
+    xs, ys : 1-D array_like
+        Real and imaginary coordinates.
+    a0, a, eps, tol
+        As in [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+
+    Returns
+    -------
+    r : (len(ys), len(xs)) ndarray
+        `r[k, j]` is the indicator at $x_j+iy_k$ (`inf` where the
+        resolvent equation was not solved).  `r < 1` marks the
+        complement of the spectrum.
+    '''
+    xs = np.asarray(xs, dtype=float)
+    ys = np.asarray(ys, dtype=float)
+    a0 = np.asarray(a0, dtype=complex)
+    m = a0.shape[0]
+    out = np.empty((ys.size, xs.size))
+    G_prev = None
+    for k, y in enumerate(ys):
+        cols = range(xs.size) if k % 2 == 0 else range(xs.size - 1, -1, -1)
+        for j in cols:
+            z = xs[j] + 1j * y
+            try:
+                G_prev = cauchy_hermitized_matrix_semicircle(z, a0, a, eps=eps, G0=G_prev)
+                g0 = G_prev[m:, :m]
+            except RuntimeError:
+                G_prev, g0 = None, None
+            out[k, j] = spectrum_indicator(z, a0, a, g0=g0, eps=eps, tol=tol)
+    return out
+
+
+def spectrum_boundary(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11,
+                      xtol: float = 1e-6, return_grid: bool = False):
+    r'''
+    Points on the boundary of the spectrum of $S=a_0\otimes1+\sum_ia_i\otimes s_i$.
+
+    The indicator $r(T_{g(z)})$ is evaluated on the grid
+    $\{x_j+iy_k\}$; on every grid edge whose endpoints are classified
+    differently (one with $r<1$, the other with $r\ge1$ or no solution)
+    the boundary is located by bisection, warm-starting the resolvent
+    solve from the exterior endpoint so that the iteration stays on the
+    physical branch.  The bisection stops when the edge is shorter than
+    `xtol`.  Points at which $\|g\|$ blows up (Corollary of the
+    criterion: the alternative to $r(T_g)=1$) are handled by the same
+    rule, since a failed solve counts as "inside".
+
+    Features thinner than the grid spacing are missed; refine the grid
+    near the real axis when the coefficients are real.
+
+    Parameters
+    ----------
+    xs, ys : 1-D array_like
+        Grid coordinates.
+    a0, a, eps, tol
+        As in [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    xtol : float, default 1e-6
+        Bisection tolerance in $z$.
+    return_grid : bool, default False
+        If True, also return the grid indicator array.
+
+    Returns
+    -------
+    pts : (n,) ndarray of complex
+        Boundary points (unordered).
+    r : (len(ys), len(xs)) ndarray
+        Returned only if `return_grid` is True.
+    '''
+    xs = np.asarray(xs, dtype=float)
+    ys = np.asarray(ys, dtype=float)
+    r = spectrum_indicator_grid(xs, ys, a0, a, eps=eps, tol=tol)
+    outside = r < 1.0
+    pts = []
+
+    def bisect(z_out, z_in):
+        g_out = spectrum_indicator(z_out, a0, a, eps=eps, tol=tol, return_g=True)[1]
+        while abs(z_in - z_out) > xtol:
+            zm = 0.5 * (z_out + z_in)
+            rm, gm = spectrum_indicator(zm, a0, a, g0=g_out, eps=eps, tol=tol, return_g=True)
+            if rm < 1.0:
+                z_out, g_out = zm, gm
+            else:
+                z_in = zm
+        return 0.5 * (z_out + z_in)
+
+    for k in range(ys.size):
+        for j in range(xs.size):
+            z = xs[j] + 1j * ys[k]
+            if j + 1 < xs.size and outside[k, j] != outside[k, j + 1]:
+                z2 = xs[j + 1] + 1j * ys[k]
+                pts.append(bisect(z, z2) if outside[k, j] else bisect(z2, z))
+            if k + 1 < ys.size and outside[k, j] != outside[k + 1, j]:
+                z2 = xs[j] + 1j * ys[k + 1]
+                pts.append(bisect(z, z2) if outside[k, j] else bisect(z2, z))
+    pts = np.array(pts, dtype=complex)
+    if return_grid:
+        return pts, r
+    return pts
