@@ -17,3 +17,4 @@
         - spectrum_indicator
         - spectrum_indicator_grid
         - spectrum_boundary
+        - ThinSpectrumWarning

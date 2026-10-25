@@ -7,6 +7,9 @@ block is left to Markdown, which turns ``a^* ... b^*`` into emphasis,
 collapses ``\\\\`` to ``\\`` and eats ``_..._``, and the formula renders as
 garbage.  Sphinx roles such as ``:func:`name``` are not understood by
 mkdocstrings either; use ``[`name`][free_matrix_laws.module.name]``.
+Parameter entries listing several names (``tol, maxiter``) are split by
+griffe with the type and default of the first name, so the parameter
+tables come out wrong; give each parameter its own entry.
 """
 import ast
 import pathlib
@@ -52,6 +55,19 @@ def _unseparated_display_math(text):
 
 
 ROLE = re.compile(r":(?:func|class|meth|mod|data|attr):`")
+MULTI_NAME = re.compile(r"^[A-Za-z_]\w*(?:, ?[A-Za-z_]\w*)+\s*(?::.*)?$")
+SECTION = re.compile(r"^(Parameters|Other Parameters|Returns|Yields|Raises|Warns)\n-+$", re.M)
+
+
+def _multi_name_entries(doc):
+    """Entries like 'a, b : type' at the top level of numpydoc item sections."""
+    bad = []
+    for sec in SECTION.finditer(doc):
+        body = doc[sec.end():]
+        nxt = re.search(r"\n\n\S[^\n]*\n-+\n", body)
+        body = body[: nxt.start()] if nxt else body
+        bad += [ln for ln in body.split("\n") if ln and not ln.startswith(" ") and MULTI_NAME.match(ln)]
+    return bad
 
 
 @pytest.mark.parametrize("module", DOCUMENTED_MODULES)
@@ -63,6 +79,8 @@ def test_docstrings_markdown(module):
             problems.append(f"{name}: $$ block needs blank lines (docstring line {ln})")
         if ROLE.search(doc):
             problems.append(f"{name}: Sphinx role; use a mkdocstrings cross-reference")
+        for ln in _multi_name_entries(doc):
+            problems.append(f"{name}: multi-name parameter entry '{ln}'; split it")
     assert not problems, "\n".join(problems)
 
 
