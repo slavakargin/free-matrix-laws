@@ -52,6 +52,7 @@ from .brown import (
     spectrum_indicator,
     spectrum_indicator_grid,
     spectrum_boundary,
+    plot_brown_density,
 )
 
 from .singularity import (
@@ -121,6 +122,7 @@ __all__ = [
     "spectrum_indicator",
     "spectrum_indicator_grid",
     "spectrum_boundary",
+    "plot_brown_density",
     # quadrature
     "cauchy_matrix_semicircle_bruteforce",
     "h_matrix_semicircle_bruteforce",
