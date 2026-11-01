@@ -15,7 +15,7 @@ from free_matrix_laws import (
     spectrum_boundary,
     brown_density,
 )
-from free_matrix_laws.brown import _kappa_apply
+from free_matrix_laws.brown import _kappa_apply, ThinSpectrumWarning
 
 
 def circular(var=1.0):
@@ -149,6 +149,7 @@ class TestIndicator:
 # Grid and boundary
 # ════════════════════════════════════════════════════════════════════════
 
+@pytest.mark.filterwarnings("error::free_matrix_laws.brown.ThinSpectrumWarning")
 class TestBoundary:
     def test_circle(self):
         a0, a = circular()
@@ -190,3 +191,52 @@ class TestBoundary:
             n = z / abs(z)                      # outward direction (star-shaped about 0)
             assert brown_density(z + 0.08 * n, a0, a, eps=1e-4) < 2e-3
             assert brown_density(z - 0.08 * n, a0, a, eps=1e-4) > 0.05
+
+
+# ════════════════════════════════════════════════════════════════════════
+# Spectra thinner than the grid step
+# ════════════════════════════════════════════════════════════════════════
+
+# S = [[s1, s2], [0, s1]]: block triangular with self-adjoint diagonal,
+# spectrum = [-2, 2] (empty interior), Brown measure = semicircle law on it.
+SEGMENT = (np.zeros((2, 2)), [np.eye(2), np.array([[0.0, 1.0], [0.0, 0.0]])])
+
+
+def _semicircle_cauchy(z):
+    d = np.sqrt(z * z - 4 + 0j)
+    d = d if d.imag * z.imag >= 0 else -d
+    return (z - d) / 2
+
+
+class TestThinSpectrum:
+    @pytest.mark.parametrize("z", [0.5 + 0.3j, 0.5 + 0.01j, -1.7 - 0.2j, 3.0])
+    def test_segment_indicator(self, z):
+        """Off the segment g = G_sc(z) I and r(T_g) = |G_sc(z)|^2 < 1."""
+        a0, a = SEGMENT
+        assert abs(spectrum_indicator(z, a0, a) - abs(_semicircle_cauchy(z)) ** 2) < 1e-9
+
+    def test_segment_missed_by_the_grid(self):
+        a0, a = SEGMENT
+        with pytest.warns(ThinSpectrumWarning, match="No grid point lies in the spectrum"):
+            pts = spectrum_boundary(np.linspace(-2.2, 2.2, 23), np.linspace(-0.9, 0.9, 12), a0, a)
+        assert len(pts) == 0
+
+    def test_segment_on_a_grid_line(self):
+        a0, a = SEGMENT
+        with pytest.warns(ThinSpectrumWarning, match="one point thick"):
+            pts = spectrum_boundary(np.linspace(-2.2, 2.2, 23), np.linspace(-0.9, 0.9, 13), a0, a)
+        assert len(pts) > 0
+        assert np.abs(pts.imag).max() < 1e-5
+        assert np.abs(pts.real).max() <= 2.0 + 1e-6
+
+    def test_island_smaller_than_a_cell(self):
+        a0, a = circular(var=0.01)                 # disk of radius 0.1
+        xs = np.linspace(-1, 1, 11)
+        with pytest.warns(ThinSpectrumWarning, match="one point thick"):
+            spectrum_boundary(xs, xs, a0, a)
+
+    @pytest.mark.filterwarnings("error::free_matrix_laws.brown.ThinSpectrumWarning")
+    def test_no_warning_far_from_the_spectrum(self):
+        a0, a = circular()
+        pts = spectrum_boundary(np.linspace(3, 5, 9), np.linspace(-1, 1, 9), a0, a)
+        assert len(pts) == 0

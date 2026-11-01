@@ -113,6 +113,7 @@ __all__ = [
     "spectrum_indicator",
     "spectrum_indicator_grid",
     "spectrum_boundary",
+    "ThinSpectrumWarning",
 ]
 
 
@@ -916,10 +917,20 @@ def spectrum_indicator_grid(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11
 
     Parameters
     ----------
-    xs, ys : 1-D array_like
-        Real and imaginary coordinates.
-    a0, a, eps, tol
-        As in [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    xs : 1-D array_like
+        Real parts $x_j$ of the grid points.
+    ys : 1-D array_like
+        Imaginary parts $y_k$ of the grid points.
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    eps : float, default 1e-4
+        Regularization for the cold start (hermitized solve); see
+        [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    tol : float, default 1e-11
+        Residual tolerance below which the resolvent solve counts as
+        converged.
 
     Returns
     -------
@@ -947,6 +958,51 @@ def spectrum_indicator_grid(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11
     return out
 
 
+class ThinSpectrumWarning(UserWarning):
+    r"""Emitted by [`spectrum_boundary`][free_matrix_laws.brown.spectrum_boundary]
+    when the grid suggests that the spectrum is thinner than the grid step."""
+
+
+def _thin_spectrum_message(r, xs, ys, near: float = 0.9):
+    r"""Diagnose a spectrum thinner than the grid step from the grid indicator.
+
+    Returns a warning message or ``None``.  Two patterns are flagged:
+
+    * no grid point is in the spectrum, but the indicator gets close to 1
+      (``max r >= near``): the grid passes next to a piece of spectrum
+      without hitting it;
+    * at least half of the grid points in the spectrum have both
+      neighbours outside along a grid line: on this grid the spectrum is
+      one point thick (a segment, a curve, an island smaller than a cell).
+      A single such point also occurs where a 2-D boundary passes exactly
+      through a grid node, hence the majority rule.
+    """
+    inside = ~(r < 1.0)
+    if not inside.any():
+        finite = np.where(np.isfinite(r), r, -np.inf)
+        k, j = np.unravel_index(np.argmax(finite), r.shape)
+        if finite[k, j] >= near:
+            return (f"No grid point lies in the spectrum, but the indicator reaches "
+                    f"r = {finite[k, j]:.3f} at z = {complex(xs[j], ys[k]):.3g}.  The spectrum is "
+                    "probably thinner than the grid step there (a segment, a curve or a small "
+                    "island) and has been missed; refine the grid or put a grid line through it.")
+        return None
+    out = ~inside
+    left = np.zeros_like(out); left[:, 1:] = out[:, :-1]
+    right = np.zeros_like(out); right[:, :-1] = out[:, 1:]
+    below = np.zeros_like(out); below[1:, :] = out[:-1, :]
+    above = np.zeros_like(out); above[:-1, :] = out[1:, :]
+    thin = inside & ((left & right) | (below & above))
+    n_in, n_thin = int(inside.sum()), int(thin.sum())
+    if 2 * n_thin >= n_in:
+        return (f"{n_thin} of the {n_in} grid points in the spectrum have both neighbours "
+                "outside along a grid line, so on this grid the spectrum is one point thick "
+                "(e.g. a segment or a curve with empty interior).  The boundary points returned "
+                "there are just the grid points that happen to lie on it; refine the grid or "
+                "inspect the indicator with spectrum_indicator_grid.")
+    return None
+
+
 def spectrum_boundary(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11,
                       xtol: float = 1e-6, return_grid: bool = False):
     r'''
@@ -962,15 +1018,34 @@ def spectrum_boundary(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11,
     criterion: the alternative to $r(T_g)=1$) are handled by the same
     rule, since a failed solve counts as "inside".
 
-    Features thinner than the grid spacing are missed; refine the grid
-    near the real axis when the coefficients are real.
+    The method assumes that the spectrum has nonempty interior at the scale
+    of the grid.  A piece of spectrum thinner than the grid step (a
+    segment, a curve, a small island) is either missed, when no grid point
+    lands on it, or represented only by the grid points that happen to lie
+    on it, since bisection from an exterior neighbour then collapses onto
+    the grid point itself.  Both situations are detected and reported by a
+    [`ThinSpectrumWarning`][free_matrix_laws.brown.ThinSpectrumWarning].
+    For example, $S=\begin{pmatrix}s_1&s_2\\0&s_1\end{pmatrix}$ has spectrum
+    $[-2,2]$: the indicator is $<1$ everywhere off the segment and tends
+    to $1$ at it.  When the coefficients are real, also refine the grid
+    near the real axis, where thin lobes of spectrum are common.
 
     Parameters
     ----------
-    xs, ys : 1-D array_like
-        Grid coordinates.
-    a0, a, eps, tol
-        As in [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    xs : 1-D array_like
+        Real parts $x_j$ of the grid points.
+    ys : 1-D array_like
+        Imaginary parts $y_k$ of the grid points.
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    eps : float, default 1e-4
+        Regularization for the cold start (hermitized solve); see
+        [`spectrum_indicator`][free_matrix_laws.brown.spectrum_indicator].
+    tol : float, default 1e-11
+        Residual tolerance below which the resolvent solve counts as
+        converged.
     xtol : float, default 1e-6
         Bisection tolerance in $z$.
     return_grid : bool, default False
@@ -982,10 +1057,20 @@ def spectrum_boundary(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11,
         Boundary points (unordered).
     r : (len(ys), len(xs)) ndarray
         Returned only if `return_grid` is True.
+
+    Warns
+    -----
+    ThinSpectrumWarning
+        If no grid point is in the spectrum but the indicator reaches
+        $0.9$ somewhere on the grid, or if at least half of the grid points
+        in the spectrum have both neighbours outside along a grid line.
     '''
     xs = np.asarray(xs, dtype=float)
     ys = np.asarray(ys, dtype=float)
     r = spectrum_indicator_grid(xs, ys, a0, a, eps=eps, tol=tol)
+    msg = _thin_spectrum_message(r, xs, ys)
+    if msg is not None:
+        warnings.warn(msg, ThinSpectrumWarning, stacklevel=2)
     outside = r < 1.0
     pts = []
 
