@@ -92,6 +92,12 @@ measure is contained in $\sigma(S)$; whether they coincide is open.
 * [`spectrum_indicator_grid`][free_matrix_laws.brown.spectrum_indicator_grid],
   [`spectrum_boundary`][free_matrix_laws.brown.spectrum_boundary] —
   the indicator on a grid and the boundary by bisection on grid edges.
+
+Quick plot
+----------
+* [`plot_brown_density`][free_matrix_laws.brown.plot_brown_density] —
+  `plot_brown_density(a0, a)` draws $\rho_\varepsilon$ in an automatically
+  chosen window (needs matplotlib).
 """
 from __future__ import annotations
 
@@ -114,6 +120,7 @@ __all__ = [
     "spectrum_indicator_grid",
     "spectrum_boundary",
     "ThinSpectrumWarning",
+    "plot_brown_density",
 ]
 
 
@@ -1098,3 +1105,198 @@ def spectrum_boundary(xs, ys, a0, a, eps: float = 1e-4, tol: float = 1e-11,
     if return_grid:
         return pts, r
     return pts
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Quick plot
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _numerical_range_box(a0, a):
+    r"""Rectangle containing the numerical range, hence the spectrum, of $S$.
+
+    The projections of the numerical range of $S$ to the axes are the
+    spectra of $\operatorname{Re}S=\operatorname{Re}a_0\otimes1+\sum_i\operatorname{Re}a_i\otimes s_i$
+    and of $\operatorname{Im}S$, and a self-adjoint matrix semicircle
+    $b_0\otimes1+\sum_ib_i\otimes s_i$ has spectrum in
+    $[\lambda_{\min}(b_0)-\rho,\ \lambda_{\max}(b_0)+\rho]$ with
+    $\rho=2\|\sum_ib_i^2\|^{1/2}$.
+    """
+    a0 = np.asarray(a0, dtype=complex)
+    a_arr = np.asarray(_as_stack(a)[0], dtype=complex)
+    out = []
+    for part in (lambda x: (x + x.conj().T) / 2, lambda x: (x - x.conj().T) / 2j):
+        b0 = part(a0)
+        lam = la.eigvalsh(b0)
+        rho = 2.0 * np.sqrt(la.norm(sum(part(ai) @ part(ai) for ai in a_arr), 2))
+        out += [lam[0] - rho, lam[-1] + rho]
+    return tuple(out)          # xmin, xmax, ymin, ymax
+
+
+def _grid(xlim, ylim, n):
+    """Grid with square cells, n points along the longer side."""
+    (x0, x1), (y0, y1) = xlim, ylim
+    h = max(x1 - x0, y1 - y0) / (n - 1)
+    nx = max(int(round((x1 - x0) / h)) + 1, 2)
+    ny = max(int(round((y1 - y0) / h)) + 1, 2)
+    return np.linspace(x0, x1, nx), np.linspace(y0, y1, ny)
+
+
+def plot_brown_density(a0, a, xlim=None, ylim=None, n: int = 60, eps: float = 1e-3,
+                       ax=None, boundary: bool = False, cmap: str = "magma",
+                       colorbar: bool = True):
+    r'''
+    Plot the regularized Brown density of $S=a_0\otimes1+\sum_ia_i\otimes s_i$.
+
+    A one-line way to look at the Brown measure:
+
+    ```python
+    plot_brown_density(a0, a)
+    ```
+
+    If `xlim` and `ylim` are not given, the window is chosen
+    automatically.  First a rectangle that provably contains the spectrum
+    is computed: the projections of the numerical range of $S$ to the axes
+    are the spectra of the self-adjoint matrix semicircles
+    $\operatorname{Re}S$ and $\operatorname{Im}S$, which are bounded by
+    $\|\sum_ib_i\otimes s_i\|\le2\|\sum_ib_i^2\|^{1/2}$.  For non-normal
+    data this rectangle can be much larger than the spectrum, so the
+    density is then computed on a coarse grid (25 points along the longer
+    side, $\varepsilon=10^{-2}$), and each axis is cropped to the range
+    that leaves out $0.1\%$ of the mass on either side, plus a margin of
+    1.5 coarse cells.  Cropping by mass rather than by a density threshold
+    keeps thin parts of high density as well as broad parts of low
+    density.  The density itself is computed by
+    [`brown_density_grid`][free_matrix_laws.brown.brown_density_grid].
+
+    If $a_0$ and all $a_i$ are Hermitian, $S$ is self-adjoint and its Brown
+    measure is its spectral distribution on $\mathbb R$, whose
+    regularized density in the plane is a ridge of width $\sim\varepsilon$
+    that no reasonable grid resolves.  In that case the one-dimensional
+    density from
+    [`biased_matrix_semicircle_density`][free_matrix_laws.transforms.biased_matrix_semicircle_density]
+    is plotted instead, on $\max(5n, 200)$ points; `ylim`, `boundary`,
+    `cmap` and `colorbar` are then ignored.  Measures concentrated on
+    curves for non-self-adjoint $S$ (for example
+    $\begin{pmatrix}s_1&s_2\\0&s_1\end{pmatrix}$) also give ridges, of
+    width depending on $\varepsilon$; refine the grid across them.
+
+    Parameters
+    ----------
+    a0 : (m,m) array_like
+        Mean matrix $a_0$ (arbitrary).
+    a : sequence of (m,m) arrays or stacked (r,m,m) array
+        Coefficients $a_1,\dots,a_r$ (arbitrary).
+    xlim : (float, float), optional
+        Range of $\operatorname{Re}z$.  Chosen automatically if omitted.
+    ylim : (float, float), optional
+        Range of $\operatorname{Im}z$.  Chosen automatically if omitted.
+    n : int, default 60
+        Number of grid points along the longer side of the window; the
+        grid has square cells.  The cost is proportional to the number of
+        grid points, a few milliseconds per point for $m=2$; use e.g.
+        `n=40` for a quick look and `n=150` for a final picture.
+    eps : float, default 1e-3
+        Regularization $\varepsilon$ of the density.
+    ax : matplotlib Axes, optional
+        Axes to draw on; a new figure is created if omitted.
+    boundary : bool, default False
+        If True, also mark the boundary of the spectrum found by
+        [`spectrum_boundary`][free_matrix_laws.brown.spectrum_boundary]
+        (on a grid four times coarser).
+    cmap : str, default "magma"
+        Matplotlib colormap.
+    colorbar : bool, default True
+        Whether to add a colorbar.
+
+    Returns
+    -------
+    ax : matplotlib Axes
+        The axes with the plot (a heat map, or a curve for self-adjoint
+        $S$).  The values themselves are available from
+        [`brown_density_grid`][free_matrix_laws.brown.brown_density_grid].
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from free_matrix_laws import plot_brown_density
+    >>> E11, E22 = np.diag([1.0, 0.0]), np.diag([0.0, 1.0])
+    >>> a0 = np.array([[0.0, 1.0], [0.3, 0.0]])          # S = [[c1, 1], [0.3, c2]]
+    >>> a = [0.42 * E11, 0.42j * E11, 0.42 * E22, 0.42j * E22]
+    >>> ax = plot_brown_density(a0, a)                    # doctest: +SKIP
+    '''
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:                                # pragma: no cover
+        raise ImportError("plot_brown_density needs matplotlib: pip install matplotlib") from exc
+
+    a0_arr = np.asarray(a0, dtype=complex)
+    a_arr = np.asarray(_as_stack(a)[0], dtype=complex)
+
+    def hermitian(x):
+        return la.norm(x - x.conj().T) <= 1e-12 * max(1.0, la.norm(x))
+
+    if hermitian(a0_arr) and all(hermitian(ai) for ai in a_arr):
+        # self-adjoint S: plot the spectral density on the real line
+        from .transforms import biased_matrix_semicircle_density
+        if xlim is None:
+            x0, x1 = _numerical_range_box(a0_arr, a_arr)[:2]
+            pad = 0.05 * (x1 - x0)
+            xlim = (x0 - pad, x1 + pad)
+        x = np.linspace(xlim[0], xlim[1], max(5 * n, 200))
+        rho = np.array([biased_matrix_semicircle_density(t, a0_arr, list(a_arr), eps=eps) for t in x])
+        if ax is None:
+            _, ax = plt.subplots()
+        ax.fill_between(x, rho, alpha=0.35)
+        ax.plot(x, rho)
+        ax.set_xlim(x[0], x[-1]); ax.set_ylim(bottom=0)
+        ax.set_xlabel(r"$x$"); ax.set_ylabel(r"$\rho(x)$")
+        ax.set_title("self-adjoint $S$: spectral density on $\\mathbb{R}$")
+        return ax
+
+    if xlim is None or ylim is None:
+        bx0, bx1, by0, by1 = _numerical_range_box(a0, a)
+        # a self-adjoint (or nearly so) S has a degenerate box: give it some height/width
+        w, h = bx1 - bx0, by1 - by0
+        side = max(w, h, 1e-12)
+        pad = 0.05 * side
+        if w < 0.1 * side:
+            cx = 0.5 * (bx0 + bx1); bx0, bx1 = cx - 0.05 * side, cx + 0.05 * side
+        if h < 0.1 * side:
+            cy = 0.5 * (by0 + by1); by0, by1 = cy - 0.05 * side, cy + 0.05 * side
+        box_x = xlim if xlim is not None else (bx0 - pad, bx1 + pad)
+        box_y = ylim if ylim is not None else (by0 - pad, by1 + pad)
+        # coarse pass, then crop each axis to the central 99.8% of the mass
+        cxs, cys = _grid(box_x, box_y, 25)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            crho = brown_density_grid(cxs, cys, a0, a, eps=max(eps, 1e-2))
+        if crho.sum() > 0:
+            def crop(marginal, c, box, q=1e-3):
+                cum = np.cumsum(marginal) / marginal.sum()
+                lo = int(np.searchsorted(cum, q))
+                hi = min(int(np.searchsorted(cum, 1 - q)), c.size - 1)
+                h = c[1] - c[0]
+                return (max(box[0], c[lo] - 1.5 * h), min(box[1], c[hi] + 1.5 * h))
+            if xlim is None:
+                xlim = crop(crho.sum(axis=0), cxs, box_x)
+            if ylim is None:
+                ylim = crop(crho.sum(axis=1), cys, box_y)
+        xlim = xlim if xlim is not None else box_x
+        ylim = ylim if ylim is not None else box_y
+
+    xs, ys = _grid(xlim, ylim, n)
+    rho = brown_density_grid(xs, ys, a0, a, eps=eps)
+
+    if ax is None:
+        _, ax = plt.subplots()
+    im = ax.pcolormesh(xs, ys, rho, shading="auto", cmap=cmap)
+    if boundary:
+        bxs, bys = _grid(xlim, ylim, max(n // 4, 8))
+        pts = spectrum_boundary(bxs, bys, a0, a)
+        ax.plot(pts.real, pts.imag, ".", color="cyan", ms=3)
+    ax.set_aspect("equal")
+    ax.set_xlim(xs[0], xs[-1]); ax.set_ylim(ys[0], ys[-1])
+    ax.set_xlabel(r"$\mathrm{Re}\,z$"); ax.set_ylabel(r"$\mathrm{Im}\,z$")
+    if colorbar:
+        ax.figure.colorbar(im, ax=ax, label=r"$\rho_\varepsilon$")
+    return ax

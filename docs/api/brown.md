@@ -18,3 +18,4 @@
         - spectrum_indicator_grid
         - spectrum_boundary
         - ThinSpectrumWarning
+        - plot_brown_density
